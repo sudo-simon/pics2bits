@@ -1,8 +1,34 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <opencv2/core/mat.hpp>
 #include <vector>
+
+// ----------------------------------------------------------------------
+
+
+#define OR_MASK_P1_0 0b01111111
+#define OR_MASK_P1_1 0b10111111
+#define OR_MASK_P1_2 0b11011111
+#define OR_MASK_P1_3 0b11101111
+#define OR_MASK_P1_4 0b11110111
+#define OR_MASK_P1_5 0b11111011
+#define OR_MASK_P1_6 0b11111101
+#define OR_MASK_P1_7 0b11111110
+
+#define OR_MASK_P2_0 0b00111111
+#define OR_MASK_P2_1 0b11001111
+#define OR_MASK_P2_2 0b11110011
+#define OR_MASK_P2_3 0b11111100
+
+#define OR_MASK_P4_0 0b00001111
+#define OR_MASK_P4_1 0b11110000
+
+
+//? Constants used to initialize Bitmap objects
+//#define BITMAP_TYPE_THRESHOLD 0
+
 
 //? Constants used by the addBits function
 #define ADD_UP 0
@@ -11,7 +37,23 @@
 #define ADD_LEFT 3
 
 
+#define DEBUG_MSG(msg) std::cout << "---- P2B DEBUG ----\n" << msg << std::endl;
+#define ERROR_MSG(msg) std::cerr << "---- P2B ERROR ----\n" << msg << std::endl;
 
+
+// ----------------------------------------------------------------------
+
+
+
+
+
+//? namespace declaration, p2b looks kinda cool ngl
+namespace p2b {
+
+
+/**
+* @brief The Bitmap class used to store informations, what the library revolves around
+*/
 class Bitmap{
 
     private:
@@ -19,10 +61,10 @@ class Bitmap{
         /*
         unsigned or int? Significant security issues involving overflows?
         */
-        unsigned rows;
-        unsigned cols;
+        size_t rows;
+        size_t cols;
         uint8_t pixel_size;
-        uint8_t threshold;
+        std::vector<uint8_t> thresholds_v;
         /*TODO
         We can include values, such as
             unsigned square_size
@@ -36,26 +78,43 @@ class Bitmap{
 
     public:
 
-        Bitmap(unsigned rows, unsigned cols, uint8_t pixel_size, uint8_t threshold);
-        ~Bitmap();
-        int getRows();
-        int getCols();
-        int increaseSize(int new_rows, int new_cols);
+        Bitmap(size_t rows, size_t cols, uint8_t pixel_size, std::vector<uint8_t> thresholds_v);
+        //~Bitmap();
+        size_t getRows();
+        size_t getCols();
+        int increaseSize(size_t new_rows, size_t new_cols);
         int doubleSize();
-        int fromImage(cv::Mat img, int bitmap_type);
+        int fromImage(cv::Mat img);
+        //int fromImage(cv::Mat img, int bitmap_type);
         cv::Mat toGrayscaleImage(std::vector<uint8_t> grayscale_palette);
         cv::Mat toRGBImage(std::vector<std::vector<uint8_t>> color_palette);
 
 };
 
 
+
+/**
+* @brief Transforms an OpenCV image in a p2b bitmap
+* @param cv::Mat img - the input image read by OpenCV
+* @param uint_8 pixel_size - how many bits to use per pixel (1, 2 or 4)
+* @param uint_8 threshold - the 0<value<256 to use as the thresholding to decide how to represent info
+* @return Bitmap - The Bitmap object correctly initialized 
+*/
 Bitmap toBitmap(cv::Mat img, uint8_t pixel_size, uint8_t threshold);
+
+
 
 std::vector<std::vector<uint8_t>> toBits(cv::Mat img, uint8_t pixel_size, uint8_t threshold);
 
-int addBits(Bitmap bitmap, cv::Mat add_img, int add_direction);
 
-int updateBitmap(Bitmap bitmap, cv::Mat updated_img);
+
+int addBits(Bitmap* bitmap_p, cv::Mat add_img, int add_direction);
+
+
+
+int updateBitmap(Bitmap* bitmap_p, cv::Mat updated_img);
+
+
 
 /*
 How to use this?
@@ -79,3 +138,9 @@ isolating the operations only to the region to update and not the whole image ag
 and costly operations.
 */
 
+
+
+
+
+
+}
