@@ -3,38 +3,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <opencv2/core/mat.hpp>
+#include <opencv2/core/matx.hpp>
 #include <vector>
 
 // ----------------------------------------------------------------------
-
-
-#define OR_MASK_P1_0 0b01111111
-#define OR_MASK_P1_1 0b10111111
-#define OR_MASK_P1_2 0b11011111
-#define OR_MASK_P1_3 0b11101111
-#define OR_MASK_P1_4 0b11110111
-#define OR_MASK_P1_5 0b11111011
-#define OR_MASK_P1_6 0b11111101
-#define OR_MASK_P1_7 0b11111110
-
-#define OR_MASK_P2_0 0b00111111
-#define OR_MASK_P2_1 0b11001111
-#define OR_MASK_P2_2 0b11110011
-#define OR_MASK_P2_3 0b11111100
-
-#define OR_MASK_P4_0 0b00001111
-#define OR_MASK_P4_1 0b11110000
-
-
-//? Constants used to initialize Bitmap objects
-//#define BITMAP_TYPE_THRESHOLD 0
-
-
-//? Constants used by the addBits function
-#define ADD_UP 0
-#define ADD_RIGHT 1
-#define ADD_DOWN 2
-#define ADD_LEFT 3
 
 
 #define DEBUG_MSG(msg) std::cout << "---- P2B DEBUG ----\n" << msg << std::endl;
@@ -51,6 +23,37 @@
 namespace p2b {
 
 
+//? Bit masks to perform bitwise OR operations
+const uint8_t OR_MASK_P1_0 = 0b01111111;
+const uint8_t OR_MASK_P1_1 = 0b10111111;
+const uint8_t OR_MASK_P1_2 = 0b11011111;
+const uint8_t OR_MASK_P1_3 = 0b11101111;
+const uint8_t OR_MASK_P1_4 = 0b11110111;
+const uint8_t OR_MASK_P1_5 = 0b11111011;
+const uint8_t OR_MASK_P1_6 = 0b11111101;
+const uint8_t OR_MASK_P1_7 = 0b11111110;
+
+const uint8_t OR_MASK_P2_0 = 0b00111111;
+const uint8_t OR_MASK_P2_1 = 0b11001111;
+const uint8_t OR_MASK_P2_2 = 0b11110011;
+const uint8_t OR_MASK_P2_3 = 0b11111100;
+
+const uint8_t OR_MASK_P4_0 = 0b00001111;
+const uint8_t OR_MASK_P4_1 = 0b11110000;
+
+
+//? Constants used to initialize Bitmap objects
+//const int BITMAP_TYPE_THRESHOLD = 0;
+
+
+//? Constants used by the addBits function
+const int ADD_UP = 0;
+const int ADD_RIGHT = 1;
+const int ADD_DOWN = 2;
+const int ADD_LEFT = 3;
+
+
+
 /**
 * @brief The Bitmap class used to store informations, what the library revolves around
 */
@@ -64,7 +67,10 @@ class Bitmap{
         size_t rows;
         size_t cols;
         uint8_t pixel_size;
+        uint8_t pixels_per_byte;
+        uint8_t pixel_values;
         std::vector<uint8_t> thresholds_v;
+
         /*TODO
         We can include values, such as
             unsigned square_size
@@ -74,6 +80,7 @@ class Bitmap{
         has added to itself (i and j) and proceed from there. It can use the square_size 
         value to estabilish the correct indexes of the square and the next one to add.
         */
+
         std::vector<std::vector<uint8_t>> vec;
 
     public:
@@ -82,12 +89,13 @@ class Bitmap{
         //~Bitmap();
         size_t getRows();
         size_t getCols();
+        std::vector<std::vector<uint8_t>> getVec();
         int increaseSize(size_t new_rows, size_t new_cols);
         int doubleSize();
         int fromImage(cv::Mat img);
         //int fromImage(cv::Mat img, int bitmap_type);
-        cv::Mat toGrayscaleImage(std::vector<uint8_t> grayscale_palette);
-        cv::Mat toRGBImage(std::vector<std::vector<uint8_t>> color_palette);
+        int toGrayscaleImage(cv::Mat* dst_img, std::vector<uint8_t> grayscale_palette);
+        int toBGRImage(cv::Mat* dst_img, std::vector<cv::Vec3b> color_palette);
 
 };
 
@@ -100,11 +108,11 @@ class Bitmap{
 * @param uint_8 threshold - the 0<value<256 to use as the thresholding to decide how to represent info
 * @return Bitmap - The Bitmap object correctly initialized 
 */
-Bitmap toBitmap(cv::Mat img, uint8_t pixel_size, uint8_t threshold);
+Bitmap toBitmap(cv::Mat img, uint8_t pixel_size, std::vector<uint8_t> thresholds_v);
 
 
 
-std::vector<std::vector<uint8_t>> toBits(cv::Mat img, uint8_t pixel_size, uint8_t threshold);
+std::vector<std::vector<uint8_t>> toBits(cv::Mat img, uint8_t pixel_size, std::vector<uint8_t> thresholds_v);
 
 
 
