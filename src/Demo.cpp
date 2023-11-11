@@ -1,6 +1,7 @@
 #include "include/pics2bits.hpp"
 
 #include <cstdint>
+#include <cstdio>
 #include <iostream>
 #include <map>
 #include <opencv2/core/matx.hpp>
@@ -29,25 +30,25 @@ map<string, string> parseArgs(int argc, char** argv){
     
     //? Update with new arguments when needed
     map<string, string> ret_map = {
-        {"image", NULL},
-        {"pixel_size", NULL},
-        {"thresholds", NULL},
-        {"palette", NULL}
+        {"image", ""},
+        {"pixel_size", ""},
+        {"thresholds", ""},
+        {"palette", ""}
     };
 
     string arg;
-    for (int i=1; i<argc; ++i){
+    for (int i=0; i<argc; ++i){
 
         arg = (string) argv[i];
 
-        if (arg == "-h" || arg == "--help"){
+        if (arg == "-h" || arg == "--help" || argc == 1){
             cout << 
                 "Binary to demo the pics2bits library\n"
                 "Accepted arguments:\n"
                 "\t-i, --image : the  input image path\n"
                 "\t-s, --pixelsize : the size of the pixel in the bitmap, one of {1, 2, 4}\n"
-                "\t-t, --thresholds : the list of threshold values to use in the bitmap, between 0 and 255, in a correct amount\n"
-                "\t-p, --palette : the list of colors to use to paint the bitmap, in the form v v v ... or (v,v,v) (v,v,v) (v,v,v) ..."
+                "\t-t, --thresholds : the list of threshold values to use in the bitmap, between 0 and 255, in the correct amount (2**pixel_size - 1)\n"
+                "\t-p, --palette : the list of colors to use to paint the bitmap, in the form g g g ... or (b,g,r) (b,g,r) (b,g,r) ..."
             << endl;
             exit(0);
         }
@@ -79,6 +80,7 @@ map<string, string> parseArgs(int argc, char** argv){
                 palette.append(color+" ");
                 ++j;
             }
+            ret_map["palette"] = palette;
         }
 
     }
@@ -89,11 +91,25 @@ map<string, string> parseArgs(int argc, char** argv){
 
 
 
+void aux_imshow(string window_name, cv::Mat img){
+    cv::namedWindow(window_name,cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_EXPANDED);
+    cv::resizeWindow(window_name,800, 800);
+    cv::imshow(window_name,img);
+    cv::waitKey(0);
+    cv::destroyAllWindows();
+}
+
+
+
+
+
 
 // ----------------------------------------------------------------------
 
 int main(int argc, char** argv){
-    cout << "pics2bits - the coolest bitmaps in town" << endl;
+    cout << "pics2bits - the coolest bitmaps in town\n" << endl;
+
+    char dmsg[256] = "\0";    //? Used for debugging purposes
 
     map<string, string> arg_map = parseArgs(argc, argv);
 
@@ -102,7 +118,7 @@ int main(int argc, char** argv){
     uint8_t pixel_size = (uint8_t) stoi(arg_map["pixel_size"]);
 
     string tmp_val = "";
-    vector<uint8_t> thresholds_v = {};
+    vector<uint8_t> thresholds_v;
     for (char& c : arg_map["thresholds"]){
         if (c == ' '){
             uint8_t th = (uint8_t) stoi(tmp_val);
@@ -116,8 +132,8 @@ int main(int argc, char** argv){
 
     tmp_val = "";
     bool coloredPalette = (arg_map["palette"].find('(') == string::npos) ? false : true;
-    vector<uint8_t> grayscale_palette = {};
-    vector<cv::Vec3b> color_palette = {};
+    vector<uint8_t> grayscale_palette;
+    vector<cv::Vec3b> color_palette;
     for (char& c : arg_map["palette"]){
         if (!coloredPalette){
 
@@ -134,7 +150,7 @@ int main(int argc, char** argv){
         else{
 
             if (c == ' '){
-                vector<uint8_t> tmp_vec = {};
+                vector<uint8_t> tmp_vec;
                 string tmp_bgr = "";
                 for (char& val_c : tmp_val){
                     if (val_c == ','){
@@ -161,30 +177,30 @@ int main(int argc, char** argv){
 
 
 
-
     cv::Mat input_img = cv::imread(img_path);
+    aux_imshow("Input image", input_img);
+    
     cv::Mat out_img;
 
-    Bitmap bm = toBitmap(input_img, pixel_size, thresholds_v);  //TODO - undefined reference because std::allocator<uint8_t> is secodn element of thresholds_v
+    Bitmap bm = toBitmap(input_img, pixel_size, thresholds_v);
 
     if (!coloredPalette) {
         bm.toGrayscaleImage(&out_img, grayscale_palette);
-        cv::namedWindow("Grayscale output bitmap",cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_EXPANDED);
-        cv::resizeWindow("Grayscale output bitmap",800, 800);
-        cv::imshow("Grayscale output bitmap",out_img);
-        cv::waitKey(0);
-        cv::destroyAllWindows();
+        aux_imshow("Grayscale output bitmap", out_img);
 
         out_img.release();
     }
 
     else {
         bm.toBGRImage(&out_img, color_palette);
-        cv::namedWindow("Color output bitmap",cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_EXPANDED);
-        cv::resizeWindow("Color output bitmap", 800, 800);
-        cv::imshow("Color output bitmap", out_img);
-        cv::waitKey(0);
-        cv::destroyAllWindows();
+        
+        snprintf(dmsg, 256,
+            "out_img.rows = %d\nout_img.cols = %d\nout_img.channels() = %d\n",
+            out_img.rows, out_img.cols, out_img.channels()
+        );
+        DEBUG_MSG(dmsg);    //! Only 1 channel here, maybe color_palette is badly created?
+        
+        aux_imshow("Color output bitmap", out_img); //TODO! out_img gives segfault HERE
 
         out_img.release();
     }

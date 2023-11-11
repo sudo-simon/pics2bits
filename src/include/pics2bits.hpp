@@ -85,7 +85,7 @@ class Bitmap{
 
     public:
 
-        Bitmap(size_t rows, size_t cols, uint8_t pixel_size, std::vector<uint8_t> thresholds_v);
+        Bitmap(size_t rows, size_t cols, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v);
         //~Bitmap();
         size_t getRows();
         size_t getCols();
@@ -94,8 +94,8 @@ class Bitmap{
         int doubleSize();
         int fromImage(cv::Mat img);
         //int fromImage(cv::Mat img, int bitmap_type);
-        int toGrayscaleImage(cv::Mat* dst_img, std::vector<uint8_t> grayscale_palette);
-        int toBGRImage(cv::Mat* dst_img, std::vector<cv::Vec3b> color_palette);
+        int toGrayscaleImage(cv::Mat* dst_img, const std::vector<uint8_t>& grayscale_palette);
+        int toBGRImage(cv::Mat* dst_img, const std::vector<cv::Vec3b>& color_palette);
 
 };
 
@@ -108,11 +108,11 @@ class Bitmap{
 * @param uint_8 threshold - the 0<value<256 to use as the thresholding to decide how to represent info
 * @return Bitmap - The Bitmap object correctly initialized 
 */
-Bitmap toBitmap(cv::Mat img, uint8_t pixel_size, std::vector<uint8_t> thresholds_v);
+Bitmap toBitmap(cv::Mat img, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v);
 
 
 
-std::vector<std::vector<uint8_t>> toBits(cv::Mat img, uint8_t pixel_size, std::vector<uint8_t> thresholds_v);
+std::vector<std::vector<uint8_t>> toBits(cv::Mat img, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v);
 
 
 
@@ -151,4 +151,4 @@ and costly operations.
 
 
 
-}
+}   //? End of p2b namespace
