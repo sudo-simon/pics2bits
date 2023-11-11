@@ -169,7 +169,7 @@ int Bitmap::fromImage(cv::Mat img){
 int Bitmap::toGrayscaleImage(cv::Mat* dst_img, vector<uint8_t> grayscale_palette){
     
     if (grayscale_palette.size() != this->pixel_values){
-        ERROR_MSG("grayscale_palette size doesn't match pixels_per_byte");
+        ERROR_MSG("grayscale_palette size doesn't match pixel_values");
         return 1;
     }
 
@@ -196,7 +196,7 @@ int Bitmap::toGrayscaleImage(cv::Mat* dst_img, vector<uint8_t> grayscale_palette
 int Bitmap::toBGRImage(cv::Mat* dst_img, vector<cv::Vec3b> BGR_palette){
     
     if (BGR_palette.size() != this->pixel_values){
-        ERROR_MSG("BGR_palette size doesn't match pixels_per_byte");
+        ERROR_MSG("BGR_palette size doesn't match pixel_values");
         return 1;
     }
 
