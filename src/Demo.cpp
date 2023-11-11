@@ -4,6 +4,8 @@
 #include <iostream>
 #include <map>
 #include <opencv2/core/matx.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
 #include <string>
 #include <vector>
 
@@ -13,14 +15,24 @@ using namespace std;
 
 // ----------------------------------------------------------------------
 
+/*
+
+    ! Very few checks on input are performed here, the correctness of use is left to the user.
+    ! More precise checks are performed inside the library itself,
+    ! but security of final implementation must be enforced.
+
+*/
+
+
+
 map<string, string> parseArgs(int argc, char** argv){
     
     //? Update with new arguments when needed
     map<string, string> ret_map = {
         {"image", NULL},
         {"pixel_size", NULL},
-        {"thresholds_type", NULL},
-        {"thresholds_v", NULL}
+        {"thresholds", NULL},
+        {"palette", NULL}
     };
 
     string arg;
@@ -34,8 +46,8 @@ map<string, string> parseArgs(int argc, char** argv){
                 "Accepted arguments:\n"
                 "\t-i, --image : the  input image path\n"
                 "\t-s, --pixelsize : the size of the pixel in the bitmap, one of {1, 2, 4}\n"
-                "\t--thresholds-type : 'gray' if thresholds are grayscale values, 'color' if thresholds are triplets of BGR values\n"
                 "\t-t, --thresholds : the list of threshold values to use in the bitmap, between 0 and 255, in a correct amount\n"
+                "\t-p, --palette : the list of colors to use to paint the bitmap, in the form v v v ... or (v,v,v) (v,v,v) (v,v,v) ..."
             << endl;
             exit(0);
         }
@@ -48,10 +60,6 @@ map<string, string> parseArgs(int argc, char** argv){
             ret_map["pixel_size"] = (string) argv[i+1];
         }
 
-        if (arg == "--thresholds_type"){
-            ret_map["thresholds_type"] = (string) argv[i+1];
-        }
-
         if (arg == "-t" || arg == "--thresholds"){
             string th_s = "";
             int j = 1;
@@ -60,7 +68,17 @@ map<string, string> parseArgs(int argc, char** argv){
                 th_s.append(th_value+" ");
                 ++j;
             }
-            ret_map["thresholds_v"] = th_s;
+            ret_map["thresholds"] = th_s;
+        }
+
+        if (arg == "-p" || arg == "--palette"){
+            string palette = "";
+            int j = 1;
+            while ((i+j < argc) && ( ((string)argv[i+j]).find_first_not_of("0123456789") == string::npos || ((string)argv[i+j]).find('(') != string::npos )){
+                string color = (string) argv[i+j];
+                palette.append(color+" ");
+                ++j;
+            }
         }
 
     }
@@ -77,48 +95,101 @@ map<string, string> parseArgs(int argc, char** argv){
 int main(int argc, char** argv){
     cout << "pics2bits - the coolest bitmaps in town" << endl;
 
-
-
-
     map<string, string> arg_map = parseArgs(argc, argv);
 
     string img_path = arg_map["image"];
+
     uint8_t pixel_size = (uint8_t) stoi(arg_map["pixel_size"]);
-    string th_type = arg_map["thresholds_type"];
-    if (th_type != "gray" && th_type != "color"){
-        cout << "thresholds_type must be one of 'gray' or 'color'" << endl;
-        exit(1);
+
+    string tmp_val = "";
+    vector<uint8_t> thresholds_v = {};
+    for (char& c : arg_map["thresholds"]){
+        if (c == ' '){
+            uint8_t th = (uint8_t) stoi(tmp_val);
+            thresholds_v.push_back(th);
+            tmp_val = "";
+        }
+        else {
+            tmp_val += c;
+        }
     }
 
-    if (th_type == "gray"){
-        vector<uint8_t> thresholds_v = {};
-        string tmp_val = "";
-        for (char& c : arg_map["thresholds_v"]){
+    tmp_val = "";
+    bool coloredPalette = (arg_map["palette"].find('(') == string::npos) ? false : true;
+    vector<uint8_t> grayscale_palette = {};
+    vector<cv::Vec3b> color_palette = {};
+    for (char& c : arg_map["palette"]){
+        if (!coloredPalette){
+
             if (c == ' '){
-                //TODO
+                uint8_t color = (uint8_t) stoi(tmp_val);
+                grayscale_palette.push_back(color);
+                tmp_val = "";
             }
-            else {
-                //TODO
+            else{
+                tmp_val += c;
             }
+
+        }
+        else{
+
+            if (c == ' '){
+                vector<uint8_t> tmp_vec = {};
+                string tmp_bgr = "";
+                for (char& val_c : tmp_val){
+                    if (val_c == ','){
+                        tmp_vec.push_back((uint8_t)stoi(tmp_bgr));
+                        tmp_bgr = "";
+                        continue;
+                    }
+                    if (((string)"0123456789").find(val_c) != string::npos)
+                        tmp_bgr += val_c;
+                }
+                cv::Vec3b color = cv::Vec3b(tmp_vec[0], tmp_vec[1], tmp_vec[2]);
+                color_palette.push_back(color);
+                tmp_vec.clear();
+                tmp_val = "";
+            }
+            else{
+                tmp_val += c;
+            }
+
         }
     }
     
-    else {
-        vector<cv::Vec3b> thresholds_v = {};
-        string tmp_val = "";
-        for (char& c : arg_map["thresholds_v"]){
-            if (c == ' '){
-                //TODO
-            }
-            else {
-                //TODO
-            }
-        }
+
+
+
+
+
+    cv::Mat input_img = cv::imread(img_path);
+    cv::Mat out_img;
+
+    Bitmap bm = toBitmap(input_img, pixel_size, thresholds_v);  //TODO - undefined reference because std::allocator<uint8_t> is secodn element of thresholds_v
+
+    if (!coloredPalette) {
+        bm.toGrayscaleImage(&out_img, grayscale_palette);
+        cv::namedWindow("Grayscale output bitmap",cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_EXPANDED);
+        cv::resizeWindow("Grayscale output bitmap",800, 800);
+        cv::imshow("Grayscale output bitmap",out_img);
+        cv::waitKey(0);
+        cv::destroyAllWindows();
+
+        out_img.release();
     }
 
+    else {
+        bm.toBGRImage(&out_img, color_palette);
+        cv::namedWindow("Color output bitmap",cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_EXPANDED);
+        cv::resizeWindow("Color output bitmap", 800, 800);
+        cv::imshow("Color output bitmap", out_img);
+        cv::waitKey(0);
+        cv::destroyAllWindows();
 
+        out_img.release();
+    }
 
-
+   
 
 
 
