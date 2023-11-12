@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <iostream>
 #include <map>
 #include <opencv2/core/matx.hpp>
@@ -48,9 +49,9 @@ map<string, string> parseArgs(int argc, char** argv){
                 "Accepted arguments:\n"
                 "\t-i, --image : the  input image path\n"
                 "\t-s, --pixelsize : the size of the pixel in the bitmap, one of {1, 2, 4}\n"
-                "\t-t, --thresholds : the list of threshold values to use in the bitmap, between 0 and 255, in the correct amount (2**pixel_size - 1)\n"
-                "\t-c, --color : boolean flag to specify showing output in color\n"
-                "\t-p, --palette : the list of colors to use to paint the bitmap, in the form g g g ... or (b,g,r) (b,g,r) (b,g,r) ..."
+                //"\t-t, --thresholds : the list of threshold values to use in the bitmap, between 0 and 255, in the correct amount (2**pixel_size - 1)\n"
+                "\t-c, --color : boolean flag to specify if output has to be shown in color\n"
+                //"\t-p, --palette : the list of colors to use to paint the bitmap, in the form g g g ... or (b,g,r) (b,g,r) (b,g,r) ..."
             << endl;
             exit(0);
         }
@@ -121,6 +122,10 @@ int main(int argc, char** argv){
     map<string, string> arg_map = parseArgs(argc, argv);
 
     string img_path = arg_map["image"];
+    if (img_path == ""){
+        ERROR_MSG("input image needed");
+        exit(1);
+    }
 
     bool use_color = (arg_map["color"]=="true") ? true : false;
 
