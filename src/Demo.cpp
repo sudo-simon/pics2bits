@@ -111,10 +111,12 @@ int main(int argc, char** argv){
 
     char dmsg[256] = "\0";    //? Used for debugging purposes
 
+
     map<string, string> arg_map = parseArgs(argc, argv);
 
     string img_path = arg_map["image"];
 
+    /*
     uint8_t pixel_size = (uint8_t) stoi(arg_map["pixel_size"]);
 
     string tmp_val = "";
@@ -172,6 +174,17 @@ int main(int argc, char** argv){
 
         }
     }
+    */
+
+
+
+    //? Hard coded params
+    uint8_t pix_size = 2;
+    vector<uint8_t> th_vector = {85, 170, 255};
+
+    vector<uint8_t> gray_palette = {85, 170, 255};
+    vector<cv::Vec3b> col_palette = {cv::Vec3b(0,0,255), cv::Vec3b(0,255,0), cv::Vec3b(255,0,0)};
+    bool use_color = true;
     
 
 
@@ -182,17 +195,17 @@ int main(int argc, char** argv){
     
     cv::Mat out_img;
 
-    Bitmap bm = toBitmap(input_img, pixel_size, thresholds_v);
+    Bitmap bm = toBitmap(input_img, pix_size, th_vector);
 
-    if (!coloredPalette) {
-        bm.toGrayscaleImage(&out_img, grayscale_palette);
+    if (!use_color) {
+        bm.toGrayscaleImage(&out_img, gray_palette);
         aux_imshow("Grayscale output bitmap", out_img);
 
         out_img.release();
     }
 
     else {
-        bm.toBGRImage(&out_img, color_palette);
+        bm.toBGRImage(&out_img, col_palette);
         
         snprintf(dmsg, 256,
             "out_img.rows = %d\nout_img.cols = %d\nout_img.channels() = %d\n",

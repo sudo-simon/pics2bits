@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
+#include <opencv2/core/hal/interface.h>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/matx.hpp>
 #include <opencv2/highgui.hpp>
@@ -115,49 +116,91 @@ int Bitmap::fromImage(cv::Mat img){
                 ++p_value;
             }
 
-            l_shift = (8-pixel_size) - ((j%this->pixels_per_byte) * pixel_size); //TODO check this formula
+            l_shift = (8-this->pixel_size) - ((j%this->pixels_per_byte) * this->pixel_size); //TODO check this formula
 
-            switch (pixel_size) {
+            /*
+                ? This algorithm that performs bitwise operations only works
+                ? if the pixels of teh bitmap we're accessing are initialized
+                ? in sequential order, like in this case, since the biwise OR
+                ? operations together with the &= could alter previously initialized
+                ? pixels if those are not 1, 11, 1111
+            */
+
+            switch (this->pixel_size) {
                 
                 case 1:
                     switch (l_shift) {
                         case 7:
                             this->vec[i][vec_j] &= ((p_value << l_shift) | OR_MASK_P1_0);
+                            break;
                         case 6:
                             this->vec[i][vec_j] &= ((p_value << l_shift) | OR_MASK_P1_1);
+                            break;
                         case 5:
                             this->vec[i][vec_j] &= ((p_value << l_shift) | OR_MASK_P1_2);
+                            break;
                         case 4:
                             this->vec[i][vec_j] &= ((p_value << l_shift) | OR_MASK_P1_3);
+                            break;
                         case 3:
                             this->vec[i][vec_j] &= ((p_value << l_shift) | OR_MASK_P1_4);
+                            break;
                         case 2:
                             this->vec[i][vec_j] &= ((p_value << l_shift) | OR_MASK_P1_5);
+                            break;
                         case 1:
                             this->vec[i][vec_j] &= ((p_value << l_shift) | OR_MASK_P1_6);
+                            break;
                         case 0:
                             this->vec[i][vec_j] &= ((p_value << l_shift) | OR_MASK_P1_7);
+                            break;
+                        default:
+                            ERROR_MSG("unexpected l_shift value in fromImage");
+                            exit(1);
+                            break;
                     }
+                    break;
 
                 case 2:
                     switch (l_shift) {
                         case 6:
                             this->vec[i][vec_j] &= ((p_value << l_shift) | OR_MASK_P2_0);
+                            break;
                         case 4:
                             this->vec[i][vec_j] &= ((p_value << l_shift) | OR_MASK_P2_1);
+                            break;
                         case 2:
                             this->vec[i][vec_j] &= ((p_value << l_shift) | OR_MASK_P2_2);
+                            break;
                         case 0:
                             this->vec[i][vec_j] &= ((p_value << l_shift) | OR_MASK_P2_3);
+                            break;
+                        default:
+                            ERROR_MSG("unexpected l_shift value in fromImage");
+                            exit(1);
+                            break;
                     }
+                    break;
 
                 case 4:
                     switch (l_shift) {
                         case 4:
                             this->vec[i][vec_j] &= ((p_value << l_shift) | OR_MASK_P4_0);
+                            break;
                         case 0:
                             this->vec[i][vec_j] &= ((p_value << l_shift) | OR_MASK_P4_1);
+                            break;
+                        default:
+                            ERROR_MSG("unexpected l_shift value in fromImage");
+                            exit(1);
+                            break;
                     }
+                    break;
+                
+                default:
+                    ERROR_MSG("invalid pixel_size value in fromImage");
+                    exit(1);
+                    break;
 
             }
 
@@ -181,11 +224,94 @@ int Bitmap::toGrayscaleImage(cv::Mat* dst_img, const vector<uint8_t>& grayscale_
     size_t img_cols = this->cols * this->pixels_per_byte;
     dst_img->create(img_rows,img_cols,CV_8U);
 
-    int p_value;
+    size_t vec_j;
+    uint8_t p_value;
+    uint8_t r_shift;
+
     for (size_t i=0; i<img_rows; ++i){
         for (size_t j=0; j<img_cols; ++j){
 
-            p_value = this->vec[i][j/this->pixels_per_byte];    //TODO! DEBUG: p_value seems to always be 0
+            vec_j = j/this->pixels_per_byte;
+            r_shift = (8-this->pixel_size) - ((j%this->pixels_per_byte) * this->pixel_size);
+
+            switch (this->pixel_size) {
+            
+                case 1:
+                    switch (r_shift) {
+                        case 7:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P1_0) >> r_shift;
+                            break;
+                        case 6:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P1_1) >> r_shift;
+                            break;
+                        case 5:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P1_2) >> r_shift;
+                            break;
+                        case 4:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P1_3) >> r_shift;
+                            break;
+                        case 3:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P1_4) >> r_shift;
+                            break;
+                        case 2:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P1_5) >> r_shift;
+                            break;
+                        case 1:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P1_6) >> r_shift;
+                            break;
+                        case 0:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P1_7) >> r_shift;
+                            break;
+                        default:
+                            ERROR_MSG("unexpected r_shift value in toGrayscaleImage");
+                            exit(1);
+                            break;
+                    }
+                    break;
+
+                case 2:
+                    switch (r_shift) {
+                        case 6:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P2_0) >> r_shift;
+                            break;
+                        case 4:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P2_1) >> r_shift;
+                            break;
+                        case 2:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P2_2) >> r_shift;
+                            break;
+                        case 0:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P2_3) >> r_shift;
+                            break;
+                        default:
+                            ERROR_MSG("unexpected r_shift value in toGrayscaleImage");
+                            exit(1);
+                            break;
+                    }
+                    break;
+
+                case 4:
+                    switch (r_shift) {
+                        case 4:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P4_0) >> r_shift;
+                            break;
+                        case 0:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P4_1) >> r_shift;
+                            break;
+                        default:
+                            ERROR_MSG("unexpected r_shift value in toGrayscaleImage");
+                            exit(1);
+                            break;
+                    }
+                    break;
+                
+                default:
+                    ERROR_MSG("invalid pixel_size value in toGrayscaleImage");
+                    exit(1);
+                    break;
+
+            }
+
             dst_img->at<uint8_t>(i,j) = p_value!=this->pixel_values ? grayscale_palette[p_value] : 0;
 
         }
@@ -206,13 +332,96 @@ int Bitmap::toBGRImage(cv::Mat* dst_img, const vector<cv::Vec3b>& BGR_palette){
 
     size_t img_rows = this->rows;
     size_t img_cols = this->cols * this->pixels_per_byte;
-    dst_img->create(img_rows,img_cols,CV_8U);
+    dst_img->create(img_rows,img_cols,CV_8SC3);
 
-    int p_value;
+    size_t vec_j;
+    uint8_t p_value;
+    uint8_t r_shift;
+
     for (size_t i=0; i<img_rows; ++i){
         for (size_t j=0; j<img_cols; ++j){
 
-            p_value = this->vec[i][j/this->pixels_per_byte];
+            vec_j = j/this->pixels_per_byte;
+            r_shift = (8-this->pixel_size) - ((j%this->pixels_per_byte) * this->pixel_size);
+
+            switch (this->pixel_size) {
+            
+                case 1:
+                    switch (r_shift) {
+                        case 7:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P1_0) >> r_shift;
+                            break;
+                        case 6:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P1_1) >> r_shift;
+                            break;
+                        case 5:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P1_2) >> r_shift;
+                            break;
+                        case 4:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P1_3) >> r_shift;
+                            break;
+                        case 3:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P1_4) >> r_shift;
+                            break;
+                        case 2:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P1_5) >> r_shift;
+                            break;
+                        case 1:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P1_6) >> r_shift;
+                            break;
+                        case 0:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P1_7) >> r_shift;
+                            break;
+                        default:
+                            ERROR_MSG("unexpected r_shift value in toBGRImage");
+                            exit(1);
+                            break;
+                    }
+                    break;
+
+                case 2:
+                    switch (r_shift) {
+                        case 6:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P2_0) >> r_shift;
+                            break;
+                        case 4:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P2_1) >> r_shift;
+                            break;
+                        case 2:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P2_2) >> r_shift;
+                            break;
+                        case 0:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P2_3) >> r_shift;
+                            break;
+                        default:
+                            ERROR_MSG("unexpected r_shift value in toBGRImage");
+                            exit(1);
+                            break;
+                    }
+                    break;
+
+                case 4:
+                    switch (r_shift) {
+                        case 4:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P4_0) >> r_shift;
+                            break;
+                        case 0:
+                            p_value = (this->vec[i][vec_j] & AND_MASK_P4_1) >> r_shift;
+                            break;
+                        default:
+                            ERROR_MSG("unexpected r_shift value in toBGRImage");
+                            exit(1);
+                            break;
+                    }
+                    break;
+                
+                default:
+                    ERROR_MSG("invalid pixel_size value in toBGRImage");
+                    exit(1);
+                    break;
+
+            }
+
             dst_img->at<cv::Vec3b>(i,j) = p_value!=this->pixel_values ? BGR_palette[p_value] : cv::Vec3b(0,0,0);
 
         }

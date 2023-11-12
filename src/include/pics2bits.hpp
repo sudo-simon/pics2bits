@@ -41,6 +41,24 @@ const uint8_t OR_MASK_P2_3 = 0b11111100;
 const uint8_t OR_MASK_P4_0 = 0b00001111;
 const uint8_t OR_MASK_P4_1 = 0b11110000;
 
+//? Bit masks to perform bitwise AND operations
+const uint8_t AND_MASK_P1_0 = 0b10000000;
+const uint8_t AND_MASK_P1_1 = 0b01000000;
+const uint8_t AND_MASK_P1_2 = 0b00100000;
+const uint8_t AND_MASK_P1_3 = 0b00010000;
+const uint8_t AND_MASK_P1_4 = 0b00001000;
+const uint8_t AND_MASK_P1_5 = 0b00000100;
+const uint8_t AND_MASK_P1_6 = 0b00000010;
+const uint8_t AND_MASK_P1_7 = 0b00000001;
+
+const uint8_t AND_MASK_P2_0 = 0b11000000;
+const uint8_t AND_MASK_P2_1 = 0b00110000;
+const uint8_t AND_MASK_P2_2 = 0b00001100;
+const uint8_t AND_MASK_P2_3 = 0b00000011;
+
+const uint8_t AND_MASK_P4_0 = 0b11110000;
+const uint8_t AND_MASK_P4_1 = 0b00001111;
+
 
 //? Constants used to initialize Bitmap objects
 //const int BITMAP_TYPE_THRESHOLD = 0;
