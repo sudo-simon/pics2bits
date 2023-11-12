@@ -18,6 +18,18 @@ using namespace std;
 
 
 
+Bitmap::Bitmap(){
+    this->rows = 0;
+    this->cols = 0;
+    this->pixel_size = 1;
+    this->pixels_per_byte = 8;
+    this->pixel_values = 1;
+    this->thresholds_v = {125};
+    this->vec = vector<vector<uint8_t>>(0,vector<uint8_t>(0));
+}
+
+
+
 Bitmap::Bitmap(size_t rows, size_t cols, uint8_t pixel_size, const vector<uint8_t>& thresholds_v){
     
     if (rows <= 0 || cols <= 0){
@@ -222,7 +234,7 @@ int Bitmap::toGrayscaleImage(cv::Mat* dst_img, const vector<uint8_t>& grayscale_
 
     size_t img_rows = this->rows;
     size_t img_cols = this->cols * this->pixels_per_byte;
-    dst_img->create(img_rows,img_cols,CV_8U);
+    dst_img->create(img_rows,img_cols,CV_8UC1);
 
     size_t vec_j;
     uint8_t p_value;
@@ -312,7 +324,7 @@ int Bitmap::toGrayscaleImage(cv::Mat* dst_img, const vector<uint8_t>& grayscale_
 
             }
 
-            dst_img->at<uint8_t>(i,j) = p_value!=this->pixel_values ? grayscale_palette[p_value] : 0;
+            dst_img->at<uint8_t>(i,j) = (p_value!=this->pixel_values) ? grayscale_palette[p_value] : 0;
 
         }
     }
@@ -422,7 +434,8 @@ int Bitmap::toBGRImage(cv::Mat* dst_img, const vector<cv::Vec3b>& BGR_palette){
 
             }
 
-            dst_img->at<cv::Vec3b>(i,j) = p_value!=this->pixel_values ? BGR_palette[p_value] : cv::Vec3b(0,0,0);
+            //TODO: why is the pixel set to a generic gray value?
+            dst_img->at<cv::Vec3b>(i,j) = (p_value!=this->pixel_values) ? BGR_palette[p_value] : cv::Vec3b(0,0,0);
 
         }
     }

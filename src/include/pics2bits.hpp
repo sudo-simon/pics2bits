@@ -103,6 +103,7 @@ class Bitmap{
 
     public:
 
+        Bitmap();
         Bitmap(size_t rows, size_t cols, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v);
         //~Bitmap();
         size_t getRows();

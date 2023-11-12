@@ -33,6 +33,7 @@ map<string, string> parseArgs(int argc, char** argv){
         {"image", ""},
         {"pixel_size", ""},
         {"thresholds", ""},
+        {"color",""},
         {"palette", ""}
     };
 
@@ -48,6 +49,7 @@ map<string, string> parseArgs(int argc, char** argv){
                 "\t-i, --image : the  input image path\n"
                 "\t-s, --pixelsize : the size of the pixel in the bitmap, one of {1, 2, 4}\n"
                 "\t-t, --thresholds : the list of threshold values to use in the bitmap, between 0 and 255, in the correct amount (2**pixel_size - 1)\n"
+                "\t-c, --color : boolean flag to specify showing output in color\n"
                 "\t-p, --palette : the list of colors to use to paint the bitmap, in the form g g g ... or (b,g,r) (b,g,r) (b,g,r) ..."
             << endl;
             exit(0);
@@ -70,6 +72,10 @@ map<string, string> parseArgs(int argc, char** argv){
                 ++j;
             }
             ret_map["thresholds"] = th_s;
+        }
+
+        if (arg == "-c" || arg == "--color"){
+            ret_map["color"] = "true";
         }
 
         if (arg == "-p" || arg == "--palette"){
@@ -116,9 +122,11 @@ int main(int argc, char** argv){
 
     string img_path = arg_map["image"];
 
-    /*
-    uint8_t pixel_size = (uint8_t) stoi(arg_map["pixel_size"]);
+    bool use_color = (arg_map["color"]=="true") ? true : false;
 
+    uint8_t pixel_size = (arg_map["pixel_size"]!="") ? (uint8_t) stoi(arg_map["pixel_size"]) : 2;
+
+    /*
     string tmp_val = "";
     vector<uint8_t> thresholds_v;
     for (char& c : arg_map["thresholds"]){
@@ -179,14 +187,21 @@ int main(int argc, char** argv){
 
 
     //? Hard coded params
-    uint8_t pix_size = 2;
-    vector<uint8_t> th_vector = {85, 170, 255};
+    vector<uint8_t> th_vector_1b = {125};
+    vector<uint8_t> gray_palette_1b = {125};
+    vector<cv::Vec3b> col_palette_1b = {cv::Vec3b(125,125,125)};
 
-    vector<uint8_t> gray_palette = {85, 170, 255};
-    vector<cv::Vec3b> col_palette = {cv::Vec3b(0,0,255), cv::Vec3b(0,255,0), cv::Vec3b(255,0,0)};
-    bool use_color = true;
+    vector<uint8_t> th_vector_2b = {85, 170, 255};
+    vector<uint8_t> gray_palette_2b = {85, 170, 255};
+    vector<cv::Vec3b> col_palette_2b = {cv::Vec3b(0,0,255), cv::Vec3b(0,255,0), cv::Vec3b(255,0,0)};
     
-
+    vector<uint8_t> th_vector_4b = {17, 34, 51, 68, 85, 102, 119, 136, 153, 170, 187, 204, 221, 238, 255};
+    vector<uint8_t> gray_palette_4b = {17, 34, 51, 68, 85, 102, 119, 136, 153, 170, 187, 204, 221, 238, 255};
+    vector<cv::Vec3b> col_palette_4b = {
+        cv::Vec3b(0,0,51), cv::Vec3b(0,0,102), cv::Vec3b(0,0,153), cv::Vec3b(0,0,204), cv::Vec3b(0,0,255),
+        cv::Vec3b(0,51,0), cv::Vec3b(0,102,0), cv::Vec3b(0,153,0), cv::Vec3b(0,204,0), cv::Vec3b(0,255,0),
+        cv::Vec3b(51,0,0), cv::Vec3b(102,0,0), cv::Vec3b(153,0,0), cv::Vec3b(204,0,0), cv::Vec3b(255,0,0)
+    };
 
 
 
@@ -194,27 +209,60 @@ int main(int argc, char** argv){
     aux_imshow("Input image", input_img);
     
     cv::Mat out_img;
-
-    Bitmap bm = toBitmap(input_img, pix_size, th_vector);
+    Bitmap bm; //? tmp initialization
+    
 
     if (!use_color) {
-        bm.toGrayscaleImage(&out_img, gray_palette);
-        aux_imshow("Grayscale output bitmap", out_img);
+        switch (pixel_size) {
+            case 1:
+                bm = toBitmap(input_img, pixel_size, th_vector_1b);
+                bm.toGrayscaleImage(&out_img, gray_palette_1b);
+                break;
+            case 2:
+                bm = toBitmap(input_img, pixel_size, th_vector_2b);
+                bm.toGrayscaleImage(&out_img, gray_palette_2b);
+                break;
+            case 4:
+                bm = toBitmap(input_img, pixel_size, th_vector_4b);
+                bm.toGrayscaleImage(&out_img, gray_palette_4b);
+                break;
+        }
+        
 
+        snprintf(dmsg, 256,
+            "out_img.rows = %d\nout_img.cols = %d\nout_img.channels() = %d\n",
+            out_img.rows, out_img.cols, out_img.channels()
+        );
+        DEBUG_MSG(dmsg);
+
+        aux_imshow("Grayscale output bitmap", out_img);
         out_img.release();
     }
 
     else {
-        bm.toBGRImage(&out_img, col_palette);
+        switch (pixel_size) {
+            case 1:
+                bm = toBitmap(input_img, pixel_size, th_vector_1b);
+                bm.toBGRImage(&out_img, col_palette_1b);
+                break;
+            case 2:
+                bm = toBitmap(input_img, pixel_size, th_vector_2b);
+                bm.toBGRImage(&out_img, col_palette_2b);
+                break;
+            case 4:
+                bm = toBitmap(input_img, pixel_size, th_vector_4b);
+                bm.toBGRImage(&out_img, col_palette_4b);
+                break;
+        }
+
         
         snprintf(dmsg, 256,
             "out_img.rows = %d\nout_img.cols = %d\nout_img.channels() = %d\n",
             out_img.rows, out_img.cols, out_img.channels()
         );
-        DEBUG_MSG(dmsg);    //! Only 1 channel here, maybe color_palette is badly created?
+        DEBUG_MSG(dmsg);
         
-        aux_imshow("Color output bitmap", out_img); //TODO! out_img gives segfault HERE
-
+        aux_imshow("Color output bitmap", out_img);
         out_img.release();
     }
 
