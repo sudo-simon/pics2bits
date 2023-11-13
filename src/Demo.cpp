@@ -1,4 +1,5 @@
-#include "include/pics2bits.hpp"
+#include "pics2bits/core.hpp"
+#include "pics2bits/utils.hpp"
 
 #include <cstdint>
 #include <cstdio>
@@ -33,9 +34,9 @@ map<string, string> parseArgs(int argc, char** argv){
     map<string, string> ret_map = {
         {"image", ""},
         {"pixel_size", ""},
-        {"thresholds", ""},
-        {"color",""},
-        {"palette", ""}
+        //{"thresholds", ""},
+        {"color",""}
+        //{"palette", ""}
     };
 
     string arg;
@@ -127,9 +128,10 @@ int main(int argc, char** argv){
         exit(1);
     }
 
+    uint8_t pixel_size = (arg_map["pixel_size"]!="") ? (uint8_t) stoi(arg_map["pixel_size"]) : 2;
+
     bool use_color = (arg_map["color"]=="true") ? true : false;
 
-    uint8_t pixel_size = (arg_map["pixel_size"]!="") ? (uint8_t) stoi(arg_map["pixel_size"]) : 2;
 
     /*
     string tmp_val = "";
@@ -214,22 +216,22 @@ int main(int argc, char** argv){
     aux_imshow("Input image", input_img);
     
     cv::Mat out_img;
-    Bitmap bm; //? tmp initialization
+    Bitmap bmp; //? tmp initialization
     
 
     if (!use_color) {
         switch (pixel_size) {
             case 1:
-                bm = toBitmap(input_img, pixel_size, th_vector_1b);
-                bm.toGrayscaleImage(&out_img, gray_palette_1b);
+                bmp = toBitmap(input_img, pixel_size, th_vector_1b);
+                bmp.toGrayscaleImage(&out_img, gray_palette_1b);
                 break;
             case 2:
-                bm = toBitmap(input_img, pixel_size, th_vector_2b);
-                bm.toGrayscaleImage(&out_img, gray_palette_2b);
+                bmp = toBitmap(input_img, pixel_size, th_vector_2b);
+                bmp.toGrayscaleImage(&out_img, gray_palette_2b);
                 break;
             case 4:
-                bm = toBitmap(input_img, pixel_size, th_vector_4b);
-                bm.toGrayscaleImage(&out_img, gray_palette_4b);
+                bmp = toBitmap(input_img, pixel_size, th_vector_4b);
+                bmp.toGrayscaleImage(&out_img, gray_palette_4b);
                 break;
         }
         
@@ -247,16 +249,16 @@ int main(int argc, char** argv){
     else {
         switch (pixel_size) {
             case 1:
-                bm = toBitmap(input_img, pixel_size, th_vector_1b);
-                bm.toBGRImage(&out_img, col_palette_1b);
+                bmp = toBitmap(input_img, pixel_size, th_vector_1b);
+                bmp.toBGRImage(&out_img, col_palette_1b);
                 break;
             case 2:
-                bm = toBitmap(input_img, pixel_size, th_vector_2b);
-                bm.toBGRImage(&out_img, col_palette_2b);
+                bmp = toBitmap(input_img, pixel_size, th_vector_2b);
+                bmp.toBGRImage(&out_img, col_palette_2b);
                 break;
             case 4:
-                bm = toBitmap(input_img, pixel_size, th_vector_4b);
-                bm.toBGRImage(&out_img, col_palette_4b);
+                bmp = toBitmap(input_img, pixel_size, th_vector_4b);
+                bmp.toBGRImage(&out_img, col_palette_4b);
                 break;
         }
 
@@ -271,13 +273,15 @@ int main(int argc, char** argv){
         out_img.release();
     }
 
+
+
    
 
 
 
 
 
-
+    PRINT_METRICS(input_img, bmp);
 
 
 
