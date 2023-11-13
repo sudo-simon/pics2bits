@@ -1,26 +1,17 @@
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
-#include <opencv2/core/mat.hpp>
-#include <opencv2/core/matx.hpp>
+#include <cstddef>
 #include <vector>
-
-// ----------------------------------------------------------------------
-
-
-#define DEBUG_MSG(msg) std::cout << "---- P2B DEBUG ----\n" << msg << std::endl;
-#define ERROR_MSG(msg) std::cerr << "---- P2B ERROR ----\n" << msg << std::endl;
+#include <opencv2/core/mat.hpp>
 
 
 // ----------------------------------------------------------------------
 
 
 
+namespace p2b{
 
-
-//? namespace declaration, p2b looks kinda cool ngl
-namespace p2b {
 
 
 //? Bit masks to perform bitwise OR operations
@@ -106,64 +97,25 @@ class Bitmap{
         Bitmap();
         Bitmap(size_t rows, size_t cols, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v);
         //~Bitmap();
+        
         size_t getRows();
         size_t getCols();
+        uint8_t getPixelSize();
+        uint8_t getPixelValues();
         std::vector<std::vector<uint8_t>> getVec();
+
         int increaseSize(size_t new_rows, size_t new_cols);
         int doubleSize();
-        int fromImage(cv::Mat img);
-        //int fromImage(cv::Mat img, int bitmap_type);
-        int toGrayscaleImage(cv::Mat* dst_img, const std::vector<uint8_t>& grayscale_palette);
-        int toBGRImage(cv::Mat* dst_img, const std::vector<cv::Vec3b>& color_palette);
+
+        int fromImage_linear(cv::Mat img);
+        int fromImage_parallel(cv::Mat img);
+        
+        int toGrayscaleImage_linear(cv::Mat* dst_img, const std::vector<uint8_t>& grayscale_palette);
+        int toGrayscaleImage_parallel(cv::Mat* dst_img, const std::vector<uint8_t>& grayscale_palette);
+        int toBGRImage_linear(cv::Mat* dst_img, const std::vector<cv::Vec3b>& color_palette);
+        int toBGRImage_parallel(cv::Mat* dst_img, const std::vector<cv::Vec3b>& color_palette);
 
 };
-
-
-
-/**
-* @brief Transforms an OpenCV image in a p2b bitmap
-* @param cv::Mat img - the input image read by OpenCV
-* @param uint_8 pixel_size - how many bits to use per pixel (1, 2 or 4)
-* @param uint_8 threshold - the 0<value<256 to use as the thresholding to decide how to represent info
-* @return Bitmap - The Bitmap object correctly initialized 
-*/
-Bitmap toBitmap(cv::Mat img, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v);
-
-
-
-std::vector<std::vector<uint8_t>> toBits(cv::Mat img, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v);
-
-
-
-int addBits(Bitmap* bitmap_p, cv::Mat add_img, int add_direction);
-
-
-
-int updateBitmap(Bitmap* bitmap_p, cv::Mat updated_img);
-
-
-
-/*
-How to use this?
-We could create a new stitch every delta_t and use the newly formed image to increase 
-the size of the bitmap to the correct rows and cols. Then use the diference between
-the new and the previous image to have the bitmap updated correctly via the addBits function.
-
-Our own stitching algorithm should be implemented (nothing more than some additions to RANSAC) 
-to be able to identify the direction in which we are adding a new "square" and also being able to
-create stitches consisting of multiple "squares" on a grid, with the possibility of 
-leaving empty contiguous spaces and not creating a "panorama style" image.
-
-This to allow for an efficient addBits function and a grid-like visualization of the resulting image,
-complementing the matrix structure of the bitmap well.
-
-Another option is to implement the updateBitmap function so that it takes just the new stitched 
-image, computes the difference between this image (probably a thresholded, grayscale frame with objects of 
-interest all in the same color via object detection) and the currently allocated bitmap, using uninitialized 
-pixels as a mask of what's new. This computed difference is then used to initialize correct pixels to correct values, 
-isolating the operations only to the region to update and not the whole image again, removing useless 
-and costly operations.
-*/
 
 
 

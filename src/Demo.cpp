@@ -1,8 +1,10 @@
-#include "include/pics2bits.hpp"
+#include "p2b/core.hpp"
+#include "p2b/utils.hpp"
 
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <chrono>
 #include <iostream>
 #include <map>
 #include <opencv2/core/matx.hpp>
@@ -33,9 +35,9 @@ map<string, string> parseArgs(int argc, char** argv){
     map<string, string> ret_map = {
         {"image", ""},
         {"pixel_size", ""},
-        {"thresholds", ""},
-        {"color",""},
-        {"palette", ""}
+        //{"thresholds", ""},
+        {"color",""}
+        //{"palette", ""}
     };
 
     string arg;
@@ -64,6 +66,7 @@ map<string, string> parseArgs(int argc, char** argv){
             ret_map["pixel_size"] = (string) argv[i+1];
         }
 
+        /*
         if (arg == "-t" || arg == "--thresholds"){
             string th_s = "";
             int j = 1;
@@ -74,11 +77,13 @@ map<string, string> parseArgs(int argc, char** argv){
             }
             ret_map["thresholds"] = th_s;
         }
+        */
 
         if (arg == "-c" || arg == "--color"){
             ret_map["color"] = "true";
         }
 
+        /*
         if (arg == "-p" || arg == "--palette"){
             string palette = "";
             int j = 1;
@@ -89,6 +94,7 @@ map<string, string> parseArgs(int argc, char** argv){
             }
             ret_map["palette"] = palette;
         }
+        */
 
     }
 
@@ -116,7 +122,7 @@ void aux_imshow(string window_name, cv::Mat img){
 int main(int argc, char** argv){
     cout << "pics2bits - the coolest bitmaps in town\n" << endl;
 
-    char dmsg[256] = "\0";    //? Used for debugging purposes
+    //char dmsg[256] = "\0";    //? Used for debugging purposes
 
 
     map<string, string> arg_map = parseArgs(argc, argv);
@@ -127,9 +133,10 @@ int main(int argc, char** argv){
         exit(1);
     }
 
+    uint8_t pixel_size = (arg_map["pixel_size"]!="") ? (uint8_t) stoi(arg_map["pixel_size"]) : 2;
+
     bool use_color = (arg_map["color"]=="true") ? true : false;
 
-    uint8_t pixel_size = (arg_map["pixel_size"]!="") ? (uint8_t) stoi(arg_map["pixel_size"]) : 2;
 
     /*
     string tmp_val = "";
@@ -193,8 +200,8 @@ int main(int argc, char** argv){
 
     //? Hard coded params
     vector<uint8_t> th_vector_1b = {125};
-    vector<uint8_t> gray_palette_1b = {125};
-    vector<cv::Vec3b> col_palette_1b = {cv::Vec3b(125,125,125)};
+    vector<uint8_t> gray_palette_1b = {255};
+    vector<cv::Vec3b> col_palette_1b = {cv::Vec3b(255,255,255)};
 
     vector<uint8_t> th_vector_2b = {85, 170, 255};
     vector<uint8_t> gray_palette_2b = {85, 170, 255};
@@ -214,31 +221,50 @@ int main(int argc, char** argv){
     aux_imshow("Input image", input_img);
     
     cv::Mat out_img;
-    Bitmap bm; //? tmp initialization
-    
+    Bitmap bmp; //? tmp initialization
+
+    auto start = chrono::high_resolution_clock::now();
+    auto end = chrono::high_resolution_clock::now();
+    long t_img2bmp = -1;
+    long t_bmp2img = -1;
+
 
     if (!use_color) {
         switch (pixel_size) {
             case 1:
-                bm = toBitmap(input_img, pixel_size, th_vector_1b);
-                bm.toGrayscaleImage(&out_img, gray_palette_1b);
+                start = chrono::high_resolution_clock::now();
+                bmp = toBitmap(input_img, pixel_size, th_vector_1b);
+                end = chrono::high_resolution_clock::now();
+                t_img2bmp = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
+
+                start = chrono::high_resolution_clock::now();
+                bmp.toGrayscaleImage_parallel(&out_img, gray_palette_1b);
+                end = chrono::high_resolution_clock::now();
+                t_bmp2img = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
                 break;
             case 2:
-                bm = toBitmap(input_img, pixel_size, th_vector_2b);
-                bm.toGrayscaleImage(&out_img, gray_palette_2b);
+                start = chrono::high_resolution_clock::now();
+                bmp = toBitmap(input_img, pixel_size, th_vector_2b);
+                end = chrono::high_resolution_clock::now();
+                t_img2bmp = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
+
+                start = chrono::high_resolution_clock::now();
+                bmp.toGrayscaleImage_parallel(&out_img, gray_palette_2b);
+                end = chrono::high_resolution_clock::now();
+                t_bmp2img = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
                 break;
             case 4:
-                bm = toBitmap(input_img, pixel_size, th_vector_4b);
-                bm.toGrayscaleImage(&out_img, gray_palette_4b);
+                start = chrono::high_resolution_clock::now();
+                bmp = toBitmap(input_img, pixel_size, th_vector_4b);
+                end = chrono::high_resolution_clock::now();
+                t_img2bmp = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
+
+                start = chrono::high_resolution_clock::now();
+                bmp.toGrayscaleImage_parallel(&out_img, gray_palette_4b);
+                end = chrono::high_resolution_clock::now();
+                t_bmp2img = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
                 break;
         }
-        
-
-        snprintf(dmsg, 256,
-            "out_img.rows = %d\nout_img.cols = %d\nout_img.channels() = %d\n",
-            out_img.rows, out_img.cols, out_img.channels()
-        );
-        DEBUG_MSG(dmsg);
 
         aux_imshow("Grayscale output bitmap", out_img);
         out_img.release();
@@ -247,29 +273,45 @@ int main(int argc, char** argv){
     else {
         switch (pixel_size) {
             case 1:
-                bm = toBitmap(input_img, pixel_size, th_vector_1b);
-                bm.toBGRImage(&out_img, col_palette_1b);
+                start = chrono::high_resolution_clock::now();
+                bmp = toBitmap(input_img, pixel_size, th_vector_1b);
+                end = chrono::high_resolution_clock::now();
+                t_img2bmp = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
+
+                start = chrono::high_resolution_clock::now();
+                bmp.toBGRImage_parallel(&out_img, col_palette_1b);
+                end = chrono::high_resolution_clock::now();
+                t_bmp2img = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
                 break;
             case 2:
-                bm = toBitmap(input_img, pixel_size, th_vector_2b);
-                bm.toBGRImage(&out_img, col_palette_2b);
+                start = chrono::high_resolution_clock::now();
+                bmp = toBitmap(input_img, pixel_size, th_vector_2b);
+                end = chrono::high_resolution_clock::now();
+                t_img2bmp = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
+
+                start = chrono::high_resolution_clock::now();
+                bmp.toBGRImage_parallel(&out_img, col_palette_2b);
+                end = chrono::high_resolution_clock::now();
+                t_bmp2img = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
                 break;
             case 4:
-                bm = toBitmap(input_img, pixel_size, th_vector_4b);
-                bm.toBGRImage(&out_img, col_palette_4b);
+                start = chrono::high_resolution_clock::now();
+                bmp = toBitmap(input_img, pixel_size, th_vector_4b);
+                end = chrono::high_resolution_clock::now();
+                t_img2bmp = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
+
+                start = chrono::high_resolution_clock::now();
+                bmp.toBGRImage_parallel(&out_img, col_palette_4b);
+                end = chrono::high_resolution_clock::now();
+                t_bmp2img = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
                 break;
         }
-
-        
-        snprintf(dmsg, 256,
-            "out_img.rows = %d\nout_img.cols = %d\nout_img.channels() = %d\n",
-            out_img.rows, out_img.cols, out_img.channels()
-        );
-        DEBUG_MSG(dmsg);
         
         aux_imshow("Color output bitmap", out_img);
         out_img.release();
     }
+
+
 
    
 
@@ -277,9 +319,7 @@ int main(int argc, char** argv){
 
 
 
-
-
-
-
+    PRINT_METRICS(input_img, bmp, t_img2bmp, t_bmp2img);
+    
     return 0;
 }
