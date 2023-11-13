@@ -65,6 +65,7 @@ map<string, string> parseArgs(int argc, char** argv){
             ret_map["pixel_size"] = (string) argv[i+1];
         }
 
+        /*
         if (arg == "-t" || arg == "--thresholds"){
             string th_s = "";
             int j = 1;
@@ -75,11 +76,13 @@ map<string, string> parseArgs(int argc, char** argv){
             }
             ret_map["thresholds"] = th_s;
         }
+        */
 
         if (arg == "-c" || arg == "--color"){
             ret_map["color"] = "true";
         }
 
+        /*
         if (arg == "-p" || arg == "--palette"){
             string palette = "";
             int j = 1;
@@ -90,6 +93,7 @@ map<string, string> parseArgs(int argc, char** argv){
             }
             ret_map["palette"] = palette;
         }
+        */
 
     }
 

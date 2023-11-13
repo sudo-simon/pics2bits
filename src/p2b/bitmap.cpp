@@ -134,7 +134,7 @@ int p2b::Bitmap::fromImage(cv::Mat img){
 
             /*
                 ? This algorithm that performs bitwise operations only works
-                ? if the pixels of teh bitmap we're accessing are initialized
+                ? if the pixels of the bitmap we're accessing are initialized
                 ? in sequential order, like in this case, since the biwise OR
                 ? operations together with the &= could alter previously initialized
                 ? pixels if those are not 1, 11, 1111
