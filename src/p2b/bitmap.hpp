@@ -97,17 +97,23 @@ class Bitmap{
         Bitmap();
         Bitmap(size_t rows, size_t cols, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v);
         //~Bitmap();
+        
         size_t getRows();
         size_t getCols();
         uint8_t getPixelSize();
         uint8_t getPixelValues();
         std::vector<std::vector<uint8_t>> getVec();
+
         int increaseSize(size_t new_rows, size_t new_cols);
         int doubleSize();
-        int fromImage(cv::Mat img);
-        //int fromImage(cv::Mat img, int bitmap_type);
-        int toGrayscaleImage(cv::Mat* dst_img, const std::vector<uint8_t>& grayscale_palette);
-        int toBGRImage(cv::Mat* dst_img, const std::vector<cv::Vec3b>& color_palette);
+
+        int fromImage_linear(cv::Mat img);
+        int fromImage_parallel(cv::Mat img);
+        
+        int toGrayscaleImage_linear(cv::Mat* dst_img, const std::vector<uint8_t>& grayscale_palette);
+        int toGrayscaleImage_parallel(cv::Mat* dst_img, const std::vector<uint8_t>& grayscale_palette);
+        int toBGRImage_linear(cv::Mat* dst_img, const std::vector<cv::Vec3b>& color_palette);
+        int toBGRImage_parallel(cv::Mat* dst_img, const std::vector<cv::Vec3b>& color_palette);
 
 };
 

@@ -30,7 +30,7 @@ void p2b::ERROR_MSG(std::string msg){
 
 
 
-void p2b::PRINT_METRICS(cv::Mat img, p2b::Bitmap bitmap, double img2bmp_time, double bmp2img_time){
+void p2b::PRINT_METRICS(cv::Mat img, p2b::Bitmap bitmap, long img2bmp_time_ms, long bmp2img_time_ms){
 
     const unsigned max_len = 512; //? If more chars will ever be needed
     char out_msg[max_len] = "\0";
@@ -93,8 +93,8 @@ void p2b::PRINT_METRICS(cv::Mat img, p2b::Bitmap bitmap, double img2bmp_time, do
         "Bitmap to image ratio = %.2f %%\nBitmap to grayscale ratio = %.2f %%\n\n"
         
         "---- Time metrics ----\n\n"
-        "Image to bitmap = %.5lf\n"
-        "Bitmap to image = %.5lf\n",
+        "Image to bitmap = %ld ms\n"
+        "Bitmap to image = %ld ms\n",
 
         bitmap.getPixelSize(),
         bitmap.getPixelValues(),
@@ -104,8 +104,8 @@ void p2b::PRINT_METRICS(cv::Mat img, p2b::Bitmap bitmap, double img2bmp_time, do
         bmp_size,
         bmp_img_ratio*100, bmp_gsc_ratio*100,
 
-        img2bmp_time,
-        bmp2img_time
+        img2bmp_time_ms,
+        bmp2img_time_ms
     );
     cout << out_msg << endl;
 

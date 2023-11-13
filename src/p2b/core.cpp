@@ -19,7 +19,9 @@ using namespace std;
 
 
 
-p2b::Bitmap p2b::toBitmap(cv::Mat img, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v){
+
+
+p2b::Bitmap p2b::toBitmap(cv::Mat img, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v, bool parallel){
     
     uint8_t pixels_per_byte = 8/pixel_size;
 
@@ -31,14 +33,22 @@ p2b::Bitmap p2b::toBitmap(cv::Mat img, uint8_t pixel_size, const std::vector<uin
     bm_cols /= pixels_per_byte;
 
     p2b::Bitmap ret_bm = Bitmap(bm_rows, bm_cols, pixel_size, thresholds_v);
-    ret_bm.fromImage(img);
+    
+    if (parallel) ret_bm.fromImage_parallel(img);
+    else ret_bm.fromImage_linear(img);
+
     return ret_bm;
 
 }
 
 
 
-vector<vector<uint8_t>> p2b::toBits(cv::Mat img, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v){
+
+
+
+
+
+vector<vector<uint8_t>> p2b::toBits(cv::Mat img, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v, bool parallel){
     
     uint8_t pixels_per_byte = 8/pixel_size;
 
@@ -50,7 +60,10 @@ vector<vector<uint8_t>> p2b::toBits(cv::Mat img, uint8_t pixel_size, const std::
     bm_cols /= pixels_per_byte;
 
     p2b::Bitmap bm = Bitmap(bm_rows, bm_cols, pixel_size, thresholds_v);
-    bm.fromImage(img);
+    
+    if (parallel) bm.fromImage_parallel(img);
+    else bm.fromImage_linear(img);
+    
     return bm.getVec();
 
 }

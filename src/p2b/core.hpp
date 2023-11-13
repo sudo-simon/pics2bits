@@ -27,11 +27,11 @@ namespace p2b {
 * @param uint_8 threshold - the 0<value<256 to use as the thresholding to decide how to represent info
 * @return Bitmap - The Bitmap object correctly initialized 
 */
-Bitmap toBitmap(cv::Mat img, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v);
+Bitmap toBitmap(cv::Mat img, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v, bool parallel=true);
 
 
 
-std::vector<std::vector<uint8_t>> toBits(cv::Mat img, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v);
+std::vector<std::vector<uint8_t>> toBits(cv::Mat img, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v, bool parallel=true);
 
 
 
