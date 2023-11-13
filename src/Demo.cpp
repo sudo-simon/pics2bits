@@ -1,5 +1,5 @@
-#include "pics2bits/core.hpp"
-#include "pics2bits/utils.hpp"
+#include "p2b/core.hpp"
+#include "p2b/utils.hpp"
 
 #include <cstdint>
 #include <cstdio>
@@ -282,8 +282,6 @@ int main(int argc, char** argv){
 
 
     PRINT_METRICS(input_img, bmp);
-
-
-
+    
     return 0;
 }
