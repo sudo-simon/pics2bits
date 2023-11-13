@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Bitmap.hpp"
+#include "bitmap.hpp"
 
 #include <cstddef>
 #include <cstdint>

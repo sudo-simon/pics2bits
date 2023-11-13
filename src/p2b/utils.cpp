@@ -82,11 +82,17 @@ void p2b::PRINT_METRICS(cv::Mat img, p2b::Bitmap bitmap){
 
     snprintf(
         out_msg, max_len,
-        "---- pics2bits memory metrics ----\n\n"
+        "---- Bitmap parameters ----\n\n"
+        "Pixel size = %d bit(s)\n"
+        "Possible values per pixel = %d\n\n"
+
+        "---- Memory metrics ----\n\n"
         "Original image size = %ld bytes\n"
         "Grayscale image size = %ld bytes\n"
         "Bitmap size = %ld bytes\n\n"
-        "Ratios:\n\tBitmap to image = %.2f %%\n\tBitmap to grayscale = %.2f %%\n",
+        "Bitmap to image ratio = %.2f %%\nBitmap to grayscale ratio = %.2f %%\n",
+        bitmap.getPixelSize(),
+        bitmap.getPixelValues(),
         img_size,
         gsc_size,
         bmp_size,

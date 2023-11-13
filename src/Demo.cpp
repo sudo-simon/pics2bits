@@ -117,7 +117,7 @@ void aux_imshow(string window_name, cv::Mat img){
 int main(int argc, char** argv){
     cout << "pics2bits - the coolest bitmaps in town\n" << endl;
 
-    char dmsg[256] = "\0";    //? Used for debugging purposes
+    //char dmsg[256] = "\0";    //? Used for debugging purposes
 
 
     map<string, string> arg_map = parseArgs(argc, argv);
@@ -195,8 +195,8 @@ int main(int argc, char** argv){
 
     //? Hard coded params
     vector<uint8_t> th_vector_1b = {125};
-    vector<uint8_t> gray_palette_1b = {125};
-    vector<cv::Vec3b> col_palette_1b = {cv::Vec3b(125,125,125)};
+    vector<uint8_t> gray_palette_1b = {255};
+    vector<cv::Vec3b> col_palette_1b = {cv::Vec3b(255,255,255)};
 
     vector<uint8_t> th_vector_2b = {85, 170, 255};
     vector<uint8_t> gray_palette_2b = {85, 170, 255};
@@ -234,13 +234,6 @@ int main(int argc, char** argv){
                 bmp.toGrayscaleImage(&out_img, gray_palette_4b);
                 break;
         }
-        
-
-        snprintf(dmsg, 256,
-            "out_img.rows = %d\nout_img.cols = %d\nout_img.channels() = %d\n",
-            out_img.rows, out_img.cols, out_img.channels()
-        );
-        DEBUG_MSG(dmsg);
 
         aux_imshow("Grayscale output bitmap", out_img);
         out_img.release();
@@ -261,13 +254,6 @@ int main(int argc, char** argv){
                 bmp.toBGRImage(&out_img, col_palette_4b);
                 break;
         }
-
-        
-        snprintf(dmsg, 256,
-            "out_img.rows = %d\nout_img.cols = %d\nout_img.channels() = %d\n",
-            out_img.rows, out_img.cols, out_img.channels()
-        );
-        DEBUG_MSG(dmsg);
         
         aux_imshow("Color output bitmap", out_img);
         out_img.release();

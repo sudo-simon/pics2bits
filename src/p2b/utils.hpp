@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Bitmap.hpp"
+#include "bitmap.hpp"
 #include <opencv2/core/mat.hpp>
 #include <string>
 

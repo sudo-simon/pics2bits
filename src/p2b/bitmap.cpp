@@ -1,6 +1,7 @@
-#include "Bitmap.hpp"
+#include "bitmap.hpp"
 #include "utils.hpp"
 
+#include <cstdint>
 #include <vector>
 #include <opencv2/imgproc.hpp>
 
@@ -65,6 +66,8 @@ p2b::Bitmap::Bitmap(size_t rows, size_t cols, uint8_t pixel_size, const vector<u
 
 size_t p2b::Bitmap::getRows(){ return this->rows; }
 size_t p2b::Bitmap::getCols(){ return this->cols; }
+uint8_t p2b::Bitmap::getPixelSize(){ return this->pixel_size; }
+uint8_t p2b::Bitmap::getPixelValues(){ return this->pixel_values; }
 vector<vector<uint8_t>> p2b::Bitmap::getVec(){ return this->vec; }
 
 

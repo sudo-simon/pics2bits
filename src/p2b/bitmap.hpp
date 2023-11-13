@@ -99,6 +99,8 @@ class Bitmap{
         //~Bitmap();
         size_t getRows();
         size_t getCols();
+        uint8_t getPixelSize();
+        uint8_t getPixelValues();
         std::vector<std::vector<uint8_t>> getVec();
         int increaseSize(size_t new_rows, size_t new_cols);
         int doubleSize();
