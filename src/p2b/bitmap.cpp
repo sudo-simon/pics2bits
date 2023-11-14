@@ -88,9 +88,9 @@ int p2b::Bitmap::increaseSize(size_t new_rows, size_t new_cols){
         return 1;
     }
 
-    this->vec.reserve(new_rows);
+    this->vec.resize(new_rows);
     for (vector<uint8_t>& row_v : this->vec){
-        row_v.reserve(new_cols);
+        row_v.resize(new_cols);
     }
     this->rows = new_rows;
     this->cols = new_cols;
@@ -102,9 +102,9 @@ int p2b::Bitmap::increaseSize(size_t new_rows, size_t new_cols){
 
 
 int p2b::Bitmap::doubleSize(){
-    this->vec.reserve(this->rows*2);
+    this->vec.resize(this->rows*2);
     for (vector<uint8_t>& row_v : this->vec){
-        row_v.reserve(this->cols*2);
+        row_v.resize(this->cols*2);
     }
     this->rows *= 2;
     this->cols *= 2;
