@@ -433,6 +433,7 @@ int p2b::Bitmap::fromImage_parallel(cv::Mat* img_ptr){
     returns 1 if dimensions do not suffice
 */
 int p2b::Bitmap::updateFromImage(cv::Mat* update_img_ptr){
+    /*
     if (
         (this->rows < update_img_ptr->rows) || 
         (this->cols < ((update_img_ptr->cols+this->pixels_per_byte-1)/this->pixels_per_byte))
@@ -440,13 +441,17 @@ int p2b::Bitmap::updateFromImage(cv::Mat* update_img_ptr){
         ERROR_MSG("bitmap dimensions are not enought to contain image, you may want to resize the bitmap");
         return 1;
     }
+    */
 
     this->vec = p2b::toBits(update_img_ptr, this->pixel_size, this->thresholds_v);
     
+    this->rows = update_img_ptr->rows;
+    this->cols = (update_img_ptr->cols+this->pixels_per_byte-1)/this->pixels_per_byte;
+
     this->last_add_r0 = 0;
     this->last_add_c0 = 0;
-    this->last_add_height = update_img_ptr->rows;
-    this->last_add_width = (update_img_ptr->cols+this->pixels_per_byte-1)/this->pixels_per_byte;
+    this->last_add_height = this->rows;
+    this->last_add_width = this->cols;
 
     return 0;
 }

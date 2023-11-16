@@ -36,10 +36,9 @@ map<string, string> parseArgs(int argc, char** argv){
     //? Update with new arguments when needed
     map<string, string> ret_map = {
         {"image", ""},
+        {"mode", ""},
         {"pixel_size", ""},
-        //{"thresholds", ""},
         {"color",""}
-        //{"palette", ""}
     };
 
     string arg;
@@ -51,11 +50,13 @@ map<string, string> parseArgs(int argc, char** argv){
             cout << 
                 "Binary to demo the pics2bits library\n"
                 "Accepted arguments:\n"
-                "\t-i, --images : the  input image paths separated by spaces\n"
+                "\t-i, --images : the  input image paths separated by spaces [REQUIRED]\n"
+                "\t-m, --mode : the mode in which to manage additional images, one of {a, u}\n"
+                    "\t\t(a = add, u = update), default = a\n"
                 "\t-s, --pixelsize : the size of the pixel in the bitmap, one of {1, 2, 4}\n"
-                //"\t-t, --thresholds : the list of threshold values to use in the bitmap, between 0 and 255, in the correct amount (2**pixel_size - 1)\n"
+                    "\t\tdefault = 2\n"
                 "\t-c, --color : boolean flag to specify if output has to be shown in color\n"
-                //"\t-p, --palette : the list of colors to use to paint the bitmap, in the form g g g ... or (b,g,r) (b,g,r) (b,g,r) ..."
+                    "\t\tdefault = false\n"
             << endl;
             exit(0);
         }
@@ -66,6 +67,10 @@ map<string, string> parseArgs(int argc, char** argv){
                 ret_map["image"] += (string) argv[i+inc] + " ";
                 inc++;
             }
+        }
+
+        if (arg == "-m" || arg == "--mode"){
+            ret_map["mode"] = (string) argv[i+1];
         }
 
         if (arg == "-s" || arg == "--pixelsize"){
@@ -106,6 +111,7 @@ void aux_testRoutineGrayscale(
     Bitmap* bitmap_ptr,
     vector<string> images,
     cv::Mat* input_img_ptr, 
+    char mode, 
     uint8_t pixel_size, 
     const vector<uint8_t>& th_vector, 
     cv::Mat* output_img_ptr,
@@ -131,30 +137,66 @@ void aux_testRoutineGrayscale(
     char msg[64] = "\0";
     const char* directions[4] = { "UP", "RIGHT", "DOWN", "LEFT" };
     int add_direction;
-    for (size_t i=1; i<images.size(); ++i){
-        
-        *input_img_ptr = cv::imread(images[i]);
-        add_direction = (i-1)%4;
-        snprintf(
-            msg, 64, 
-            "Image #%ld that will be added to bitmap (DIR = %s)",
-            i, directions[add_direction]
-        );
-        aux_imshow(msg, *input_img_ptr);
-        
-        start = chrono::high_resolution_clock::now();
-        addBits(bitmap_ptr, input_img_ptr, add_direction);
-        end = chrono::high_resolution_clock::now();
 
-        snprintf(
-            msg, 64, 
-            "Time to add image #%ld = %ld ms",
-            i, (chrono::duration_cast<chrono::milliseconds>(end-start)).count()
-        );
-        cout << msg << endl;
-        bitmap_ptr->toGrayscaleImage_parallel(output_img_ptr, gs_palette);
-        aux_imshow("Resulting bitmap", *output_img_ptr);
+    switch (mode) {
+        case 'a':
+            for (size_t i=1; i<images.size(); ++i){
+                
+                *input_img_ptr = cv::imread(images[i]);
+                add_direction = (i-1)%4;
+                snprintf(
+                    msg, 64, 
+                    "Image #%ld that will be added to bitmap (DIR = %s)",
+                    i, directions[add_direction]
+                );
+                aux_imshow(msg, *input_img_ptr);
+                
+                start = chrono::high_resolution_clock::now();
+                addBits(bitmap_ptr, input_img_ptr, add_direction);
+                end = chrono::high_resolution_clock::now();
 
+                snprintf(
+                    msg, 64, 
+                    "Time to add image #%ld = %ld ms",
+                    i, (chrono::duration_cast<chrono::milliseconds>(end-start)).count()
+                );
+                cout << msg << endl;
+                bitmap_ptr->toGrayscaleImage_parallel(output_img_ptr, gs_palette);
+                aux_imshow("Resulting bitmap", *output_img_ptr);
+
+            }
+            break;
+
+        case 'u':
+            for (size_t i=1; i<images.size(); ++i){
+                
+                *input_img_ptr = cv::imread(images[i]);
+                snprintf(
+                    msg, 64, 
+                    "Image #%ld that will update the bitmap",
+                    i
+                );
+                aux_imshow(msg, *input_img_ptr);
+                
+                start = chrono::high_resolution_clock::now();
+                updateBitmap(bitmap_ptr, input_img_ptr);
+                end = chrono::high_resolution_clock::now();
+
+                snprintf(
+                    msg, 64, 
+                    "Time to update bitmap with image #%ld = %ld ms",
+                    i, (chrono::duration_cast<chrono::milliseconds>(end-start)).count()
+                );
+                cout << msg << endl;
+                bitmap_ptr->toGrayscaleImage_parallel(output_img_ptr, gs_palette);
+                aux_imshow("Resulting bitmap", *output_img_ptr);
+
+            }
+            break;
+
+        default:
+            ERROR_MSG("invalid mode, can only be 'a' or 'u'");
+            exit(1);
     }
 
 }
@@ -194,6 +236,9 @@ int main(int argc, char** argv){
     }
     cout<<"\n"<<endl;
 
+
+
+    char mode = (arg_map["mode"] != "") ? arg_map["mode"][0] : 'a';
     uint8_t pixel_size = (arg_map["pixel_size"]!="") ? (uint8_t) stoi(arg_map["pixel_size"]) : 2;
     bool use_color = (arg_map["color"]=="true") ? true : false;
 
@@ -240,6 +285,7 @@ int main(int argc, char** argv){
                     &bmp, 
                     images, 
                     &input_img, 
+                    mode,
                     pixel_size, 
                     th_vector_1b, 
                     &out_img, 
@@ -253,6 +299,7 @@ int main(int argc, char** argv){
                     &bmp, 
                     images, 
                     &input_img, 
+                    mode,
                     pixel_size, 
                     th_vector_2b, 
                     &out_img, 
@@ -266,6 +313,7 @@ int main(int argc, char** argv){
                     &bmp, 
                     images, 
                     &input_img, 
+                    mode,
                     pixel_size, 
                     th_vector_4b, 
                     &out_img, 
@@ -326,16 +374,24 @@ int main(int argc, char** argv){
 
 
 
+    if (mode == 'a'){
+        size_t final_bmp_size = (
+            bmp.getRows() * bmp.getCols() +
+            bmp.getRows() * sizeof(bmp.getVec()[0]) +
+            sizeof(bmp)
+        );
+        cout << "\nFinal bitmap size = " << final_bmp_size << " bytes" << endl;
 
-    size_t final_bmp_size = 0;
-    final_bmp_size += (
-        bmp.getRows() * bmp.getCols() +
-        bmp.getRows() * sizeof(bmp.getVec()[0]) +
-        sizeof(bmp)
-    );
-    cout << "Final bitmap size = " << final_bmp_size << " bytes \n" << endl;
+        size_t potential_gsc_size = (
+            bmp.getRows() * bmp.getCols()*(8/bmp.getPixelSize()) +
+            bmp.getRows() * sizeof(out_img.at<uint8_t>(0)) +
+            sizeof(out_img)
+        );
+        cout << "Potential corresponding grayscale image size = " << potential_gsc_size << " bytes\n" << endl;
+    }
 
 
+    //? Returning to original pic and bitmap to print correct metrics
     input_img = cv::imread(images[0]);
     switch (pixel_size) {
         case 1:
