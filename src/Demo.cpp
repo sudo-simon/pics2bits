@@ -206,7 +206,12 @@ int main(int argc, char** argv){
     vector<uint8_t> th_vector_2b = {85, 170, 255};
     vector<uint8_t> gray_palette_2b = {85, 170, 255};
     vector<cv::Vec3b> col_palette_2b = {cv::Vec3b(0,0,255), cv::Vec3b(0,255,0), cv::Vec3b(255,0,0)};
-    
+    vector<vector<uint8_t>> col_palette_test = {
+        {0,0,255},
+        {0,255,0},
+        {255,0,0}
+    };
+
     vector<uint8_t> th_vector_4b = {17, 34, 51, 68, 85, 102, 119, 136, 153, 170, 187, 204, 221, 238, 255};
     vector<uint8_t> gray_palette_4b = {17, 34, 51, 68, 85, 102, 119, 136, 153, 170, 187, 204, 221, 238, 255};
     vector<cv::Vec3b> col_palette_4b = {
@@ -233,7 +238,7 @@ int main(int argc, char** argv){
         switch (pixel_size) {
             case 1:
                 start = chrono::high_resolution_clock::now();
-                bmp = toBitmap(input_img, pixel_size, th_vector_1b);
+                bmp = toBitmap(&input_img, pixel_size, th_vector_1b);
                 end = chrono::high_resolution_clock::now();
                 t_img2bmp = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
 
@@ -244,7 +249,7 @@ int main(int argc, char** argv){
                 break;
             case 2:
                 start = chrono::high_resolution_clock::now();
-                bmp = toBitmap(input_img, pixel_size, th_vector_2b);
+                bmp = toBitmap(&input_img, pixel_size, th_vector_2b);
                 end = chrono::high_resolution_clock::now();
                 t_img2bmp = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
 
@@ -255,7 +260,7 @@ int main(int argc, char** argv){
                 break;
             case 4:
                 start = chrono::high_resolution_clock::now();
-                bmp = toBitmap(input_img, pixel_size, th_vector_4b);
+                bmp = toBitmap(&input_img, pixel_size, th_vector_4b);
                 end = chrono::high_resolution_clock::now();
                 t_img2bmp = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
 
@@ -274,34 +279,34 @@ int main(int argc, char** argv){
         switch (pixel_size) {
             case 1:
                 start = chrono::high_resolution_clock::now();
-                bmp = toBitmap(input_img, pixel_size, th_vector_1b);
+                bmp = toBitmap(&input_img, pixel_size, th_vector_1b);
                 end = chrono::high_resolution_clock::now();
                 t_img2bmp = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
 
                 start = chrono::high_resolution_clock::now();
-                bmp.toBGRImage_parallel(&out_img, col_palette_1b);
+                bmp.toBGRImage_parallel(&out_img, col_palette_test);
                 end = chrono::high_resolution_clock::now();
                 t_bmp2img = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
                 break;
             case 2:
                 start = chrono::high_resolution_clock::now();
-                bmp = toBitmap(input_img, pixel_size, th_vector_2b);
+                bmp = toBitmap(&input_img, pixel_size, th_vector_2b);
                 end = chrono::high_resolution_clock::now();
                 t_img2bmp = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
 
                 start = chrono::high_resolution_clock::now();
-                bmp.toBGRImage_parallel(&out_img, col_palette_2b);
+                bmp.toBGRImage_parallel(&out_img, col_palette_test);
                 end = chrono::high_resolution_clock::now();
                 t_bmp2img = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
                 break;
             case 4:
                 start = chrono::high_resolution_clock::now();
-                bmp = toBitmap(input_img, pixel_size, th_vector_4b);
+                bmp = toBitmap(&input_img, pixel_size, th_vector_4b);
                 end = chrono::high_resolution_clock::now();
                 t_img2bmp = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
 
                 start = chrono::high_resolution_clock::now();
-                bmp.toBGRImage_parallel(&out_img, col_palette_4b);
+                bmp.toBGRImage_parallel(&out_img, col_palette_test);
                 end = chrono::high_resolution_clock::now();
                 t_bmp2img = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
                 break;

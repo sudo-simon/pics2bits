@@ -1,4 +1,5 @@
 #include "bitmap.hpp"
+#include "core.hpp"
 #include "utils.hpp"
 
 #include <algorithm>
@@ -19,23 +20,23 @@ using namespace std;
 
 
 p2b::Bitmap::Bitmap(){
-    this->rows = 0;
-    this->cols = 0;
+    this->rows = 1;
+    this->cols = 1;
     this->pixel_size = 1;
     this->pixels_per_byte = 8;
     this->pixel_values = 1;
     this->thresholds_v = {125};
-    this->vec = vector<vector<uint8_t>>(0,vector<uint8_t>(0));
+    this->vec = vector<vector<uint8_t>>(1,vector<uint8_t>(1));
 }
 
 
 
 
 
-p2b::Bitmap::Bitmap(size_t rows, size_t cols, uint8_t pixel_size, const vector<uint8_t>& thresholds_v){
+p2b::Bitmap::Bitmap(long rows, long cols, uint8_t pixel_size, const vector<uint8_t>& thresholds_v){
     
     if (rows <= 0 || cols <= 0){
-        ERROR_MSG("rows and cols are not both greater than zero");
+        ERROR_MSG("rows and cols are not both positive values");
         exit(1);
     }
     if ((pixel_size < 1) || (pixel_size > 4) || (pixel_size & (pixel_size-1)) != 0){    //! Maybe I could just check the 3 possible values...
@@ -68,21 +69,27 @@ p2b::Bitmap::Bitmap(size_t rows, size_t cols, uint8_t pixel_size, const vector<u
 
 }
 
+p2b::Bitmap::~Bitmap(){
+    this->thresholds_v.clear();
+    this->vec.clear();
+}
 
 
 
 
-size_t p2b::Bitmap::getRows(){ return this->rows; }
-size_t p2b::Bitmap::getCols(){ return this->cols; }
+
+long p2b::Bitmap::getRows(){ return this->rows; }
+long p2b::Bitmap::getCols(){ return this->cols; }
 uint8_t p2b::Bitmap::getPixelSize(){ return this->pixel_size; }
 uint8_t p2b::Bitmap::getPixelValues(){ return this->pixel_values; }
+vector<uint8_t> p2b::Bitmap::getThresholds(){ return this->thresholds_v; }
 vector<vector<uint8_t>> p2b::Bitmap::getVec(){ return this->vec; }
 
 
 
 
 
-int p2b::Bitmap::increaseSize(size_t new_rows, size_t new_cols){
+int p2b::Bitmap::increaseSize(long new_rows, long new_cols){
     if ((new_rows < this->rows) || (new_cols < this->cols)){
         ERROR_MSG("new_rows and new_cols must be greater than the existing rows and cols");
         return 1;
@@ -92,6 +99,14 @@ int p2b::Bitmap::increaseSize(size_t new_rows, size_t new_cols){
     for (vector<uint8_t>& row_v : this->vec){
         row_v.resize(new_cols);
     }
+
+    for (long i=0; i<new_rows; ++i){
+        for (long j=0; j<new_cols; ++j){
+            if (i >= this->rows || j >= this->cols)
+                this->vec[i][j] = 255;
+        }
+    }
+
     this->rows = new_rows;
     this->cols = new_cols;
     return 0;
@@ -106,6 +121,14 @@ int p2b::Bitmap::doubleSize(){
     for (vector<uint8_t>& row_v : this->vec){
         row_v.resize(this->cols*2);
     }
+
+    for (long i=0; i<this->rows*2; ++i){
+        for (long j=0; j<this->cols*2; ++j){
+            if (i >= this->rows || j >= this->cols)
+                this->vec[i][j] = 255;
+        }
+    }
+
     this->rows *= 2;
     this->cols *= 2;
     return 0;
@@ -123,13 +146,13 @@ int p2b::Bitmap::doubleSize(){
 
 
 
-int p2b::Bitmap::fromImage_linear(cv::Mat img){
+int p2b::Bitmap::fromImage_linear(cv::Mat* img_ptr){
 
-    size_t img_rows = img.rows;
-    size_t img_cols = img.cols;
-    cv::Mat gs_img = img;
-    if (img.channels() > 1){
-        cv::cvtColor(img, gs_img, cv::COLOR_BGR2GRAY);
+    size_t img_rows = img_ptr->rows;
+    size_t img_cols = img_ptr->cols;
+    cv::Mat gs_img = *img_ptr;
+    if (img_ptr->channels() > 1){
+        cv::cvtColor(*img_ptr, gs_img, cv::COLOR_BGR2GRAY);
     }
 
     size_t vec_j;
@@ -248,11 +271,11 @@ int p2b::Bitmap::fromImage_linear(cv::Mat img){
 
 
 
-int p2b::Bitmap::fromImage_parallel(cv::Mat img){
+int p2b::Bitmap::fromImage_parallel(cv::Mat* img_ptr){
     
-    cv::Mat gs_img = img;
-    if (img.channels() > 1){
-        cv::cvtColor(img, gs_img, cv::COLOR_BGR2GRAY);
+    cv::Mat gs_img = *img_ptr;
+    if (img_ptr->channels() > 1){
+        cv::cvtColor(*img_ptr, gs_img, cv::COLOR_BGR2GRAY);
     }
     
     gs_img.forEach<uint8_t>(
@@ -359,6 +382,62 @@ int p2b::Bitmap::fromImage_parallel(cv::Mat img){
 }
 
 
+
+
+
+
+
+
+int p2b::Bitmap::updateFromImage(cv::Mat* update_img_ptr){
+    if ((this->rows != update_img_ptr->rows) || (this->cols != update_img_ptr->cols)){
+        ERROR_MSG("update_img and bitmap do not have the same dimensions");
+        return 1;
+    }
+
+    this->vec = p2b::toBits(update_img_ptr, this->pixel_size, this->thresholds_v);
+    return 0;
+}
+
+
+int p2b::Bitmap::updateRegionFromImage(cv::Mat* update_img_ptr, long start_row, long start_col){
+    if (
+        start_row + update_img_ptr->rows > this->rows ||
+        start_col + update_img_ptr->cols > this->cols
+    ){
+        ERROR_MSG("total expected dimensions are bigger than bitmap dimensions");
+        return 1;
+    }
+
+    vector<vector<uint8_t>> tmp = p2b::toBits(update_img_ptr, this->pixel_size, this->thresholds_v);
+    for (long i=0; i<update_img_ptr->rows; ++i){
+        for (long j=0; j<update_img_ptr->cols; ++j){
+            this->vec[i+start_row][j+start_col] = tmp[i][j];
+        }
+    }
+    return 0;
+}
+
+
+
+
+
+
+
+
+int p2b::Bitmap::addImage(cv::Mat* img_ptr, const int add_direction){
+    if (add_direction < 0 || add_direction > 3){
+        ERROR_MSG("invalid add_direction constant");
+        return 1;
+    }
+
+    //int img_rows = img_ptr->rows;
+    //int img_cols = img_ptr->cols;
+
+    //TODO
+
+    return 0;
+
+}
 
 
 
@@ -708,7 +787,7 @@ int p2b::Bitmap::toBGRImage_linear(cv::Mat* dst_img, const vector<cv::Vec3b>& BG
 
 
 
-int p2b::Bitmap::toBGRImage_parallel(cv::Mat* dst_img, const std::vector<cv::Vec3b>& BGR_palette){
+int p2b::Bitmap::toBGRImage_parallel(cv::Mat* dst_img, const std::vector<std::vector<uint8_t>>& BGR_palette){
 
     if (BGR_palette.size() != this->pixel_values){
         ERROR_MSG("BGR_palette size doesn't match pixel_values");
@@ -808,7 +887,17 @@ int p2b::Bitmap::toBGRImage_parallel(cv::Mat* dst_img, const std::vector<cv::Vec
             }
 
             //TODO: why is the pixel set to a generic gray value?
-            pixel = (p_value!=this->pixel_values) ? BGR_palette[p_value] : cv::Vec3b(0,0,0);
+            if (p_value != this->pixel_values){
+                pixel[0] = BGR_palette[p_value][0];
+                pixel[1] = BGR_palette[p_value][1];
+                pixel[2] = BGR_palette[p_value][2];
+            }
+            else {
+                pixel[0] = 0;
+                pixel[1] = 0;
+                pixel[2] = 0;
+            }
+            //pixel = (p_value!=this->pixel_values) ? BGR_palette[p_value] : cv::Vec3b(0,0,0);
 
         }
     );
