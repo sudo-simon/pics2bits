@@ -9,8 +9,6 @@ A demo binary is included to show relevant performance metrics and can be compil
 
 ```sh
 ~$ mkdir build
-
 ~$ cmake build/
-
 ~$ cmake --build ./build --config Debug --target all
 ```

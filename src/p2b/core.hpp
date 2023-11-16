@@ -27,19 +27,23 @@ namespace p2b {
 * @param uint_8 threshold - the 0<value<256 to use as the thresholding to decide how to represent info
 * @return Bitmap - The Bitmap object correctly initialized 
 */
-Bitmap toBitmap(cv::Mat img, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v, bool parallel=true);
+Bitmap toBitmap(cv::Mat* img_ptr, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v, bool parallel=true);
 
 
 
-std::vector<std::vector<uint8_t>> toBits(cv::Mat img, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v, bool parallel=true);
+std::vector<std::vector<uint8_t>> toBits(cv::Mat* img_ptr, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v, bool parallel=true);
 
 
 
-int addBits(Bitmap* bitmap_p, cv::Mat add_img, int add_direction);
+int updateBitmap(Bitmap* bitmap_ptr, cv::Mat* update_img_ptr);
 
 
 
-int updateBitmap(Bitmap* bitmap_p, cv::Mat updated_img);
+int updateBitmapRegion(Bitmap* bitmap_ptr, cv::Mat* update_img_ptr, size_t start_row, size_t start_col);
+
+
+
+int addBits(Bitmap* bitmap_ptr, cv::Mat* add_img_ptr, int add_direction);
 
 
 

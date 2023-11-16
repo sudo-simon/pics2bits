@@ -56,10 +56,10 @@ const uint8_t AND_MASK_P4_1 = 0b00001111;
 
 
 //? Constants used by the addBits function
-const int ADD_UP = 0;
-const int ADD_RIGHT = 1;
-const int ADD_DOWN = 2;
-const int ADD_LEFT = 3;
+const int DIR_UP = 0;
+const int DIR_RIGHT = 1;
+const int DIR_DOWN = 2;
+const int DIR_LEFT = 3;
 
 
 
@@ -73,12 +73,18 @@ class Bitmap{
         /*
         unsigned or int? Significant security issues involving overflows?
         */
-        size_t rows;
-        size_t cols;
+        long rows;
+        long cols;
         uint8_t pixel_size;
         uint8_t pixels_per_byte;
         uint8_t pixel_values;
         std::vector<uint8_t> thresholds_v;
+
+        //? Values used to store informations about the last added image to the bitmap
+        long last_add_r0;
+        long last_add_c0;
+        long last_add_height;
+        long last_add_width;
 
         /*TODO
         We can include values, such as
@@ -95,25 +101,34 @@ class Bitmap{
     public:
 
         Bitmap();
-        Bitmap(size_t rows, size_t cols, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v);
-        //~Bitmap();
+        Bitmap(long rows, long cols, uint8_t pixel_size, const std::vector<uint8_t>& thresholds_v);
+        ~Bitmap();
         
-        size_t getRows();
-        size_t getCols();
+        long getRows();
+        long getCols();
         uint8_t getPixelSize();
         uint8_t getPixelValues();
+        std::vector<uint8_t> getThresholds();
         std::vector<std::vector<uint8_t>> getVec();
 
-        int increaseSize(size_t new_rows, size_t new_cols);
-        int doubleSize();
+        int increaseSize(const long new_rows, const long new_cols, const int resize_direction);
+        int doubleSize(const int resize_direction);
 
-        int fromImage_linear(cv::Mat img);
-        int fromImage_parallel(cv::Mat img);
+        int fromImage_linear(cv::Mat* img_ptr);
+        int fromImage_parallel(cv::Mat* img_ptr);
+
+        int updateFromImage(cv::Mat* update_img_ptr);
+        int updateRegionFromImage(cv::Mat* update_img_ptr, long start_row, long start_col);
+
+        int addImage(cv::Mat* add_img_ptr, const int add_direction);
         
         int toGrayscaleImage_linear(cv::Mat* dst_img, const std::vector<uint8_t>& grayscale_palette);
         int toGrayscaleImage_parallel(cv::Mat* dst_img, const std::vector<uint8_t>& grayscale_palette);
+
+        //! toBGRImage functions do not work
+        //TODO debug and fix
         int toBGRImage_linear(cv::Mat* dst_img, const std::vector<cv::Vec3b>& color_palette);
-        int toBGRImage_parallel(cv::Mat* dst_img, const std::vector<cv::Vec3b>& color_palette);
+        int toBGRImage_parallel(cv::Mat* dst_img, const std::vector<std::vector<uint8_t>>& color_palette);
 
 };
 
