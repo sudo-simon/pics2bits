@@ -22,10 +22,14 @@ using namespace std;
 p2b::Bitmap::Bitmap(){
     this->rows = 1;
     this->cols = 1;
-    this->pixel_size = 1;
-    this->pixels_per_byte = 8;
-    this->pixel_values = 1;
+    this->pixel_size = 2;
+    this->pixels_per_byte = 4;
+    this->pixel_values = 3;
     this->thresholds_v = {125};
+    this->last_add_r0 = -1;
+    this->last_add_c0 = -1;
+    this->last_add_height = -1;
+    this->last_add_width = -1;
     this->vec = vector<vector<uint8_t>>(1,vector<uint8_t>(1));
 }
 
@@ -65,6 +69,11 @@ p2b::Bitmap::Bitmap(long rows, long cols, uint8_t pixel_size, const vector<uint8
     this->pixel_values = (1 << pixel_size) -1;
     this->thresholds_v = thresholds_v;
 
+    this->last_add_r0 = -1;
+    this->last_add_c0 = -1;
+    this->last_add_height = -1;
+    this->last_add_width = -1;
+
     this->vec = vector<vector<uint8_t>>(rows, vector<uint8_t>(cols,255));
 
 }
@@ -89,7 +98,7 @@ vector<vector<uint8_t>> p2b::Bitmap::getVec(){ return this->vec; }
 
 
 
-int p2b::Bitmap::increaseSize(long new_rows, long new_cols){
+int p2b::Bitmap::increaseSize(const long new_rows, const long new_cols, const int resize_direction){
     if ((new_rows < this->rows) || (new_cols < this->cols)){
         ERROR_MSG("new_rows and new_cols must be greater than the existing rows and cols");
         return 1;
@@ -103,8 +112,42 @@ int p2b::Bitmap::increaseSize(long new_rows, long new_cols){
     for (long i=0; i<new_rows; ++i){
         for (long j=0; j<new_cols; ++j){
             if (i >= this->rows || j >= this->cols)
-                this->vec[i][j] = 255;
+                this->vec[i][j] = 255;  //? Byte set to 0b11111111
         }
+    }
+
+    //? Moving original image if it has to be displaced
+    uint8_t tmp_swap;
+    long row_diff = new_rows - this->rows;
+    long col_diff = new_cols - this->cols;
+    switch (resize_direction) {
+
+        case p2b::DIR_UP:
+            for (long i=0; i<this->rows; ++i){
+                for (long j=0; j<this->cols; ++j){
+                    if (this->vec[i][j] != 255){
+                        tmp_swap = this->vec[i][j];
+                        this->vec[i][j] = this->vec[i+row_diff][j];
+                        this->vec[i+row_diff][j] = tmp_swap;
+                    }
+                }
+            }
+            this->last_add_r0 += row_diff;   //? Now the r0 of the last image is increased
+            break;
+        
+        case p2b::DIR_LEFT:
+            for (long i=0; i<this->rows; ++i){
+                for (long j=0; j<this->cols; ++j){
+                    if (this->vec[i][j] != 255){
+                        tmp_swap = this->vec[i][j];
+                        this->vec[i][j] = this->vec[i][j+col_diff];
+                        this->vec[i][j+col_diff] = tmp_swap; 
+                    }
+                }
+            }
+            this->last_add_c0 += col_diff;  //? Now the c0 of the last image is increased
+            break;
+    
     }
 
     this->rows = new_rows;
@@ -115,23 +158,11 @@ int p2b::Bitmap::increaseSize(long new_rows, long new_cols){
 
 
 
-
-int p2b::Bitmap::doubleSize(){
-    this->vec.resize(this->rows*2);
-    for (vector<uint8_t>& row_v : this->vec){
-        row_v.resize(this->cols*2);
-    }
-
-    for (long i=0; i<this->rows*2; ++i){
-        for (long j=0; j<this->cols*2; ++j){
-            if (i >= this->rows || j >= this->cols)
-                this->vec[i][j] = 255;
-        }
-    }
-
-    this->rows *= 2;
-    this->cols *= 2;
-    return 0;
+/*
+    Wrapper for increaseSize(rows*2, cols*2, resize_direction)
+*/
+int p2b::Bitmap::doubleSize(const int resize_direction){
+    return this->increaseSize(this->rows*2, this->cols*2, resize_direction);
 }
 
 
@@ -176,7 +207,8 @@ int p2b::Bitmap::fromImage_linear(cv::Mat* img_ptr){
                 ++p_value;
             }
 
-            l_shift = (8-this->pixel_size) - ((j%this->pixels_per_byte) * this->pixel_size); //TODO check this formula
+            //? Critical calculation of the left shift
+            l_shift = (8-this->pixel_size) - ((j%this->pixels_per_byte) * this->pixel_size);
 
             //? This algorithm that performs bitwise operations only works
             //? if the pixels of the bitmap we're accessing are initialized
@@ -265,6 +297,10 @@ int p2b::Bitmap::fromImage_linear(cv::Mat* img_ptr){
         }
     }
 
+    this->last_add_r0 = 0;
+    this->last_add_c0 = 0;
+    this->last_add_height = img_rows;
+    this->last_add_width = (img_cols+this->pixels_per_byte-1)/this->pixels_per_byte;
     return 0;    
 
 }
@@ -377,6 +413,10 @@ int p2b::Bitmap::fromImage_parallel(cv::Mat* img_ptr){
         }
     );
 
+    this->last_add_r0 = 0;
+    this->last_add_c0 = 0;
+    this->last_add_height = img_ptr->rows;
+    this->last_add_width = (img_ptr->cols+this->pixels_per_byte-1)/this->pixels_per_byte;
     return 0;
 
 }
@@ -387,33 +427,51 @@ int p2b::Bitmap::fromImage_parallel(cv::Mat* img_ptr){
 
 
 
-
+/*
+    Updates teh content of the bitmap according to the new img_ptr,
+    a while loop can be used to call proper resizing of bitmap as it 
+    returns 1 if dimensions do not suffice
+*/
 int p2b::Bitmap::updateFromImage(cv::Mat* update_img_ptr){
-    if ((this->rows != update_img_ptr->rows) || (this->cols != update_img_ptr->cols)){
-        ERROR_MSG("update_img and bitmap do not have the same dimensions");
+    if (
+        (this->rows < update_img_ptr->rows) || 
+        (this->cols < ((update_img_ptr->cols+this->pixels_per_byte-1)/this->pixels_per_byte))
+    ){
+        ERROR_MSG("bitmap dimensions are not enought to contain image, you may want to resize the bitmap");
         return 1;
     }
 
     this->vec = p2b::toBits(update_img_ptr, this->pixel_size, this->thresholds_v);
+    
+    this->last_add_r0 = 0;
+    this->last_add_c0 = 0;
+    this->last_add_height = update_img_ptr->rows;
+    this->last_add_width = (update_img_ptr->cols+this->pixels_per_byte-1)/this->pixels_per_byte;
+
     return 0;
 }
 
-
+/*
+    Function to update only a region of the original bitmap,
+    start_row and start_col are teh indexes from which to start updating,
+    referring to image pixel indexes and not to bitmap's
+*/
 int p2b::Bitmap::updateRegionFromImage(cv::Mat* update_img_ptr, long start_row, long start_col){
     if (
-        start_row + update_img_ptr->rows > this->rows ||
-        start_col + update_img_ptr->cols > this->cols
+        (start_row + update_img_ptr->rows > this->rows) || 
+        ((start_col + update_img_ptr->cols +this->pixels_per_byte-1)/this->pixels_per_byte > this->cols)
     ){
         ERROR_MSG("total expected dimensions are bigger than bitmap dimensions");
         return 1;
     }
 
-    vector<vector<uint8_t>> tmp = p2b::toBits(update_img_ptr, this->pixel_size, this->thresholds_v);
+    vector<vector<uint8_t>> tmp_vec = p2b::toBits(update_img_ptr, this->pixel_size, this->thresholds_v);
     for (long i=0; i<update_img_ptr->rows; ++i){
         for (long j=0; j<update_img_ptr->cols; ++j){
-            this->vec[i+start_row][j+start_col] = tmp[i][j];
+            this->vec[i+start_row][j+start_col] = tmp_vec[i][j];
         }
     }
+
     return 0;
 }
 
@@ -430,10 +488,76 @@ int p2b::Bitmap::addImage(cv::Mat* img_ptr, const int add_direction){
         return 1;
     }
 
-    //int img_rows = img_ptr->rows;
-    //int img_cols = img_ptr->cols;
+    long img_rows = img_ptr->rows;
+    long img_cols = img_ptr->cols;
+    while (img_cols%this->pixels_per_byte != 0){
+        ++img_cols;
+    }
+    img_cols /= this->pixels_per_byte;
 
-    //TODO
+    long start_row;
+    long start_col;
+    vector<vector<uint8_t>> tmp_vec = p2b::toBits(img_ptr, this->pixel_size, this->thresholds_v);
+    switch (add_direction) {
+        
+        case p2b::DIR_UP:
+            while ((this->last_add_r0 - img_rows) < 0 || this->cols < img_cols){
+                this->doubleSize(add_direction);
+            }
+            start_row = this->last_add_r0 - img_rows;
+            start_col = this->last_add_c0;
+            for (long i=0; i<img_rows; ++i){
+                for (long j=0; j<img_cols; ++j){
+                    this->vec[i+start_row][j+start_col] = tmp_vec[i][j];
+                }
+            }
+            break;
+
+        case p2b::DIR_RIGHT:
+            while ((this->last_add_c0 + last_add_width + img_cols) > this->cols || this->rows < img_rows){
+                this->doubleSize(add_direction);
+            }
+            start_row = this->last_add_r0;
+            start_col = this->last_add_c0 + this->last_add_width;
+            for (long i=0; i<img_rows; ++i){
+                for (long j=0; j<img_cols; ++j){
+                    this->vec[i+start_row][j+start_col] = tmp_vec[i][j];
+                }
+            }
+            break;
+
+        case p2b::DIR_DOWN:
+            while ((this->last_add_r0 + last_add_height + img_rows) > this->rows || this->cols < img_cols){
+                this->doubleSize(add_direction);
+            }
+            start_row = this->last_add_r0 + this->last_add_height;
+            start_col = this->last_add_c0;
+            for (long i=0; i<img_rows; ++i){
+                for (long j=0; j<img_cols; ++j){
+                    this->vec[i+start_row][j+start_col] = tmp_vec[i][j];
+                }
+            }
+            break;
+
+        case p2b::DIR_LEFT:
+            while ((this->last_add_c0 - img_cols) < 0 || this->rows < img_rows){
+                this->doubleSize(add_direction);
+            }
+            start_row = this->last_add_r0;
+            start_col = this->last_add_c0 - img_cols;
+            for (long i=0; i<img_rows; ++i){
+                for (long j=0; j<img_cols; ++j){
+                    this->vec[i+start_row][j+start_col] = tmp_vec[i][j];
+                }
+            }
+            break;
+    
+    }
+
+    this->last_add_r0 = start_row;
+    this->last_add_c0 = start_col;
+    this->last_add_height = img_rows;
+    this->last_add_width = img_cols;
 
     return 0;
 

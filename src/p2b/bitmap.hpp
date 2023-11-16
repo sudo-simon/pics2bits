@@ -56,10 +56,10 @@ const uint8_t AND_MASK_P4_1 = 0b00001111;
 
 
 //? Constants used by the addBits function
-const int ADD_UP = 0;
-const int ADD_RIGHT = 1;
-const int ADD_DOWN = 2;
-const int ADD_LEFT = 3;
+const int DIR_UP = 0;
+const int DIR_RIGHT = 1;
+const int DIR_DOWN = 2;
+const int DIR_LEFT = 3;
 
 
 
@@ -79,6 +79,12 @@ class Bitmap{
         uint8_t pixels_per_byte;
         uint8_t pixel_values;
         std::vector<uint8_t> thresholds_v;
+
+        //? Values used to store informations about the last added image to the bitmap
+        long last_add_r0;
+        long last_add_c0;
+        long last_add_height;
+        long last_add_width;
 
         /*TODO
         We can include values, such as
@@ -105,8 +111,8 @@ class Bitmap{
         std::vector<uint8_t> getThresholds();
         std::vector<std::vector<uint8_t>> getVec();
 
-        int increaseSize(long new_rows, long new_cols);
-        int doubleSize();
+        int increaseSize(const long new_rows, const long new_cols, const int resize_direction);
+        int doubleSize(const int resize_direction);
 
         int fromImage_linear(cv::Mat* img_ptr);
         int fromImage_parallel(cv::Mat* img_ptr);
@@ -119,7 +125,8 @@ class Bitmap{
         int toGrayscaleImage_linear(cv::Mat* dst_img, const std::vector<uint8_t>& grayscale_palette);
         int toGrayscaleImage_parallel(cv::Mat* dst_img, const std::vector<uint8_t>& grayscale_palette);
 
-        //! toBGRImage functions do not work, investigate
+        //! toBGRImage functions do not work
+        //TODO debug and fix
         int toBGRImage_linear(cv::Mat* dst_img, const std::vector<cv::Vec3b>& color_palette);
         int toBGRImage_parallel(cv::Mat* dst_img, const std::vector<std::vector<uint8_t>>& color_palette);
 
