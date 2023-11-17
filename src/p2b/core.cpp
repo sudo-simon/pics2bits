@@ -95,9 +95,6 @@ int p2b::updateBitmapRegion(Bitmap *bitmap_ptr, cv::Mat *update_img_ptr, size_t 
 
 
 
-
-
-
-int p2b::addBits(Bitmap* bitmap_p, cv::Mat* add_img_ptr, int add_direction){
-    return bitmap_p->addImage(add_img_ptr, add_direction);
+int p2b::addBits(Bitmap* bitmap_p, cv::Mat* add_img_ptr, int add_direction, bool minimal_resizing){
+    return bitmap_p->addImage(add_img_ptr, add_direction, minimal_resizing);
 }

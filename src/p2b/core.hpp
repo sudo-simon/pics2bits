@@ -42,8 +42,13 @@ int updateBitmap(Bitmap* bitmap_ptr, cv::Mat* update_img_ptr);
 int updateBitmapRegion(Bitmap* bitmap_ptr, cv::Mat* update_img_ptr, size_t start_row, size_t start_col);
 
 
-
-int addBits(Bitmap* bitmap_ptr, cv::Mat* add_img_ptr, int add_direction);
+/*
+    Core function to add an image to the bitmap following an "append" logic.
+    The new image is added on the TOP (0), RIGHT (1), BOTTOM (2) or LEFT (3)
+    of the last added portion of the bitmap in a contiguous fashion.
+    Proper reallocation is performed accordingly to the new image size.
+*/
+int addBits(Bitmap* bitmap_ptr, cv::Mat* add_img_ptr, int add_direction, bool minimal_resizing=false);
 
 
 

@@ -487,9 +487,9 @@ int p2b::Bitmap::updateRegionFromImage(cv::Mat* update_img_ptr, long start_row, 
 
 
 
-int p2b::Bitmap::addImage(cv::Mat* img_ptr, const int add_direction){
+int p2b::Bitmap::addImage(cv::Mat* img_ptr, const int add_direction, bool minimal_resizing){
     if (add_direction < 0 || add_direction > 3){
-        ERROR_MSG("invalid add_direction constant");
+        ERROR_MSG("invalid add_direction constant (UP=0, RIGHT=1, DOWN=2, LEFT=3)");
         return 1;
     }
 
@@ -507,8 +507,14 @@ int p2b::Bitmap::addImage(cv::Mat* img_ptr, const int add_direction){
         
         case p2b::DIR_UP:
             while ((this->last_add_r0 - img_rows) < 0 || this->cols < img_cols){
-                this->doubleSize(add_direction);
+                (!minimal_resizing) ? this->doubleSize(add_direction) : 
+                this->increaseSize(
+                    MAX_SIZE(this->rows, img_rows + this->rows - this->last_add_r0), 
+                    MAX_SIZE(this->cols, img_cols), 
+                    add_direction
+                );
             }
+
             start_row = this->last_add_r0 - img_rows;
             start_col = this->last_add_c0;
             for (long i=0; i<img_rows; ++i){
@@ -520,8 +526,14 @@ int p2b::Bitmap::addImage(cv::Mat* img_ptr, const int add_direction){
 
         case p2b::DIR_RIGHT:
             while ((this->last_add_c0 + last_add_width + img_cols) > this->cols || this->rows < img_rows){
-                this->doubleSize(add_direction);
+                (!minimal_resizing) ? this->doubleSize(add_direction) : 
+                this->increaseSize(
+                    MAX_SIZE(this->rows, img_rows), 
+                    MAX_SIZE(this->cols, img_cols + this->last_add_c0 + this->last_add_width), 
+                    add_direction
+                );
             }
+
             start_row = this->last_add_r0;
             start_col = this->last_add_c0 + this->last_add_width;
             for (long i=0; i<img_rows; ++i){
@@ -533,8 +545,14 @@ int p2b::Bitmap::addImage(cv::Mat* img_ptr, const int add_direction){
 
         case p2b::DIR_DOWN:
             while ((this->last_add_r0 + last_add_height + img_rows) > this->rows || this->cols < img_cols){
-                this->doubleSize(add_direction);
+                (!minimal_resizing) ? this->doubleSize(add_direction) : 
+                this->increaseSize(
+                    MAX_SIZE(this->rows, img_rows + this->last_add_r0 + this->last_add_height), 
+                    MAX_SIZE(this->cols, img_cols), 
+                    add_direction
+                );
             }
+
             start_row = this->last_add_r0 + this->last_add_height;
             start_col = this->last_add_c0;
             for (long i=0; i<img_rows; ++i){
@@ -546,8 +564,14 @@ int p2b::Bitmap::addImage(cv::Mat* img_ptr, const int add_direction){
 
         case p2b::DIR_LEFT:
             while ((this->last_add_c0 - img_cols) < 0 || this->rows < img_rows){
-                this->doubleSize(add_direction);
+                (!minimal_resizing) ? this->doubleSize(add_direction) : 
+                this->increaseSize(
+                    MAX_SIZE(this->rows, img_rows), 
+                    MAX_SIZE(this->cols, img_cols + this->cols - this->last_add_c0), 
+                    add_direction
+                );
             }
+
             start_row = this->last_add_r0;
             start_col = this->last_add_c0 - img_cols;
             for (long i=0; i<img_rows; ++i){

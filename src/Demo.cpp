@@ -2,11 +2,13 @@
 #include "p2b/core.hpp"
 #include "p2b/utils.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <chrono>
+#include <filesystem>
 #include <iostream>
 #include <map>
 #include <opencv2/core/matx.hpp>
@@ -36,8 +38,10 @@ map<string, string> parseArgs(int argc, char** argv){
     //? Update with new arguments when needed
     map<string, string> ret_map = {
         {"image", ""},
+        {"dir", ""},
         {"mode", ""},
         {"pixel_size", ""},
+        {"resizing", ""},
         {"color",""}
     };
 
@@ -50,11 +54,15 @@ map<string, string> parseArgs(int argc, char** argv){
             cout << 
                 "Binary to demo the pics2bits library\n"
                 "Accepted arguments:\n"
-                "\t-i, --images : the  input image paths separated by spaces [REQUIRED]\n"
+                "\t-i, --images : the  input image paths separated by spaces\n"
+                "\t-d, --dir : the directory containing all input images to perform tests\n"
+                    "\t\t(you can use the provided demo_pics directory)\n"
                 "\t-m, --mode : the mode in which to manage additional images, one of {a, u}\n"
                     "\t\t(a = add, u = update), default = a\n"
                 "\t-s, --pixelsize : the size of the pixel in the bitmap, one of {1, 2, 4}\n"
                     "\t\tdefault = 2\n"
+                "\t-r, --resizing : boolean flag to use minimal resizing of the bitmap\n"
+                    "\t\tdefault = false\n"
                 "\t-c, --color : boolean flag to specify if output has to be shown in color\n"
                     "\t\tdefault = false\n"
             << endl;
@@ -69,12 +77,20 @@ map<string, string> parseArgs(int argc, char** argv){
             }
         }
 
+        if (arg == "-d" || arg == "--dir"){
+            ret_map["dir"] = (string) argv[i+1];
+        }
+
         if (arg == "-m" || arg == "--mode"){
             ret_map["mode"] = (string) argv[i+1];
         }
 
         if (arg == "-s" || arg == "--pixelsize"){
             ret_map["pixel_size"] = (string) argv[i+1];
+        }
+
+        if (arg == "-r" || arg == "--resizing"){
+            ret_map["resizing"] = "true";
         }
 
         if (arg == "-c" || arg == "--color"){
@@ -113,6 +129,7 @@ void aux_testRoutineGrayscale(
     cv::Mat* input_img_ptr, 
     char mode, 
     uint8_t pixel_size, 
+    bool min_resizing, 
     const vector<uint8_t>& th_vector, 
     cv::Mat* output_img_ptr,
     const vector<uint8_t>& gs_palette,
@@ -136,7 +153,8 @@ void aux_testRoutineGrayscale(
 
     char msg[64] = "\0";
     const char* directions[4] = { "UP", "RIGHT", "DOWN", "LEFT" };
-    int add_direction;
+    int add_direction = p2b::DIR_UP;
+    //TODO: UP AND LEFT CREATE PROBLEMS WHEN MINIMAL RESIZING IS PERFORMED!!
 
     switch (mode) {
         case 'a':
@@ -152,7 +170,7 @@ void aux_testRoutineGrayscale(
                 aux_imshow(msg, *input_img_ptr);
                 
                 start = chrono::high_resolution_clock::now();
-                addBits(bitmap_ptr, input_img_ptr, add_direction);
+                addBits(bitmap_ptr, input_img_ptr, add_direction, min_resizing);
                 end = chrono::high_resolution_clock::now();
 
                 snprintf(
@@ -217,17 +235,35 @@ int main(int argc, char** argv){
     map<string, string> arg_map = parseArgs(argc, argv);
 
     string img_paths = arg_map["image"];
-    if (img_paths == ""){
-        ERROR_MSG("input image needed");
+    string dir_path = arg_map["dir"];
+    if (img_paths == "" && dir_path == ""){
+        ERROR_MSG("one of --image and --dir argument is required");
         exit(1);
     }
+    if (img_paths != "" && dir_path != ""){
+        cout << "Both --image and --dir arguments provided, only using --dir in this case" << endl;
+    }
+
 
     vector<string> images = vector<string>();
-    int del_i = img_paths.find(' '); 
-    while (del_i != -1) { // Loop until no delimiter is left in the string.
-        images.push_back(img_paths.substr(0, del_i));
-        img_paths.erase(img_paths.begin(), img_paths.begin() + del_i + 1);
-        del_i = img_paths.find(' ');
+
+    if (dir_path == ""){
+        int del_i = img_paths.find(' '); 
+        while (del_i != -1) { // Loop until no delimiter is left in the string.
+            images.push_back(img_paths.substr(0, del_i));
+            img_paths.erase(img_paths.begin(), img_paths.begin() + del_i + 1);
+            del_i = img_paths.find(' ');
+        }
+    }
+    else {
+        for (const filesystem::directory_entry& file : filesystem::directory_iterator(dir_path)){
+            images.push_back((string) file.path());
+        }
+        std::sort(
+            images.begin(),
+            images.end(),
+            [](string a, string b){return a<b;}
+        );
     }
 
     cout << "---- Input image paths ("<< images.size() << ") ----" << endl;
@@ -240,6 +276,7 @@ int main(int argc, char** argv){
 
     char mode = (arg_map["mode"] != "") ? arg_map["mode"][0] : 'a';
     uint8_t pixel_size = (arg_map["pixel_size"]!="") ? (uint8_t) stoi(arg_map["pixel_size"]) : 2;
+    bool min_resizing = (arg_map["resizing"]=="true") ? true : false;
     bool use_color = (arg_map["color"]=="true") ? true : false;
 
 
@@ -287,6 +324,7 @@ int main(int argc, char** argv){
                     &input_img, 
                     mode,
                     pixel_size, 
+                    min_resizing,
                     th_vector_1b, 
                     &out_img, 
                     gray_palette_1b, 
@@ -301,6 +339,7 @@ int main(int argc, char** argv){
                     &input_img, 
                     mode,
                     pixel_size, 
+                    min_resizing,
                     th_vector_2b, 
                     &out_img, 
                     gray_palette_2b, 
@@ -315,6 +354,7 @@ int main(int argc, char** argv){
                     &input_img, 
                     mode,
                     pixel_size, 
+                    min_resizing,
                     th_vector_4b, 
                     &out_img, 
                     gray_palette_4b, 

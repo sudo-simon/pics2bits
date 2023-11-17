@@ -110,3 +110,9 @@ void p2b::PRINT_METRICS(cv::Mat img, p2b::Bitmap bitmap, long img2bmp_time_ms, l
     cout << out_msg << endl;
 
 }
+
+
+
+long p2b::MAX_SIZE(long size_1, long size_2){
+    return (size_1 > size_2) ? size_1 : size_2;
+}
