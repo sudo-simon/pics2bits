@@ -120,7 +120,7 @@ class Bitmap{
         int updateFromImage(cv::Mat* update_img_ptr);
         int updateRegionFromImage(cv::Mat* update_img_ptr, long start_row, long start_col);
 
-        int addImage(cv::Mat* add_img_ptr, const int add_direction);
+        int addImage(cv::Mat* add_img_ptr, const int add_direction, bool minimal_resizing);
         
         int toGrayscaleImage_linear(cv::Mat* dst_img, const std::vector<uint8_t>& grayscale_palette);
         int toGrayscaleImage_parallel(cv::Mat* dst_img, const std::vector<uint8_t>& grayscale_palette);
