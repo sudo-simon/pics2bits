@@ -1,4 +1,3 @@
-#include "bitmap.hpp"
 #include "p2b/core.hpp"
 #include "p2b/utils.hpp"
 
@@ -110,12 +109,13 @@ map<string, string> parseArgs(int argc, char** argv){
 
 
 
-void aux_imshow(string window_name, cv::Mat img){
+int aux_imshow(string window_name, cv::Mat img){
     cv::namedWindow(window_name,cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_EXPANDED);
     cv::resizeWindow(window_name,800, 800);
     cv::imshow(window_name,img);
-    cv::waitKey(0);
+    int key = cv::waitKey(0);
     cv::destroyAllWindows();
+    return key;
 }
 
 
@@ -151,10 +151,10 @@ void aux_testRoutineGrayscale(
 
     aux_imshow("Grayscale output bitmap", *output_img_ptr);
 
-    char msg[64] = "\0";
+    char msg[128] = "\0";
     const char* directions[4] = { "UP", "RIGHT", "DOWN", "LEFT" };
     int add_direction = p2b::DIR_UP;
-    //TODO: UP AND LEFT CREATE PROBLEMS WHEN MINIMAL RESIZING IS PERFORMED!!
+    int key = -1;
 
     switch (mode) {
         case 'a':
@@ -163,18 +163,39 @@ void aux_testRoutineGrayscale(
                 *input_img_ptr = cv::imread(images[i]);
                 add_direction = (i-1)%4;
                 snprintf(
-                    msg, 64, 
-                    "Image #%ld that will be added to bitmap (DIR = %s)",
+                    msg, 128, 
+                    "Image #%ld that will be added to bitmap (choose direction with arrow keys, default = %s)",
                     i, directions[add_direction]
                 );
-                aux_imshow(msg, *input_img_ptr);
+                key = aux_imshow(msg, *input_img_ptr);
+
+                /*
+                    ! CHANGE THIS WITH YOUR CORRECT ARROW KEY VALUES
+                    ! A LINE OF CODE TO PRINT THIS VALUES CAN BE DECOMMENTED BELOW
+                */
+                //! cout<<"KEY = "<<key<<endl;
+
+                switch (key) {
+                    case 82: //? UP
+                        add_direction = p2b::DIR_UP;
+                        break;
+                    case 83: //? RIGHT
+                        add_direction = p2b::DIR_RIGHT;
+                        break;    
+                    case 84: //? DOWN
+                        add_direction = p2b::DIR_DOWN;
+                        break;
+                    case 81: //? LEFT
+                        add_direction = p2b::DIR_LEFT;
+                        break;
+                }
                 
                 start = chrono::high_resolution_clock::now();
                 addBits(bitmap_ptr, input_img_ptr, add_direction, min_resizing);
                 end = chrono::high_resolution_clock::now();
 
                 snprintf(
-                    msg, 64, 
+                    msg, 128, 
                     "Time to add image #%ld = %ld ms",
                     i, (chrono::duration_cast<chrono::milliseconds>(end-start)).count()
                 );
@@ -190,7 +211,7 @@ void aux_testRoutineGrayscale(
                 
                 *input_img_ptr = cv::imread(images[i]);
                 snprintf(
-                    msg, 64, 
+                    msg, 128, 
                     "Image #%ld that will update the bitmap",
                     i
                 );
@@ -201,7 +222,7 @@ void aux_testRoutineGrayscale(
                 end = chrono::high_resolution_clock::now();
 
                 snprintf(
-                    msg, 64, 
+                    msg, 128, 
                     "Time to update bitmap with image #%ld = %ld ms",
                     i, (chrono::duration_cast<chrono::milliseconds>(end-start)).count()
                 );
@@ -222,12 +243,49 @@ void aux_testRoutineGrayscale(
 
 
 
+void aux_testRoutineColor(
+    Bitmap* bitmap_ptr,
+    vector<string> images,
+    cv::Mat* input_img_ptr, 
+    char mode, 
+    uint8_t pixel_size, 
+    bool min_resizing, 
+    const vector<uint8_t>& th_vector, 
+    cv::Mat* output_img_ptr,
+    const vector<cv::Vec3b>& col_palette,
+    long* img2bmp_ptr,
+    long* bmp2img_ptr
+){
+    ERROR_MSG("color version of this demo still not implemented, sorry :(");
+    exit(0);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // ----------------------------------------------------------------------
 
 int main(int argc, char** argv){
-    cout << "pics2bits - the coolest bitmaps in town\n" << endl;
+    cout << "\npics2bits - the coolest bitmaps in town\n" << endl;
 
     //char dmsg[256] = "\0";    //? Used for debugging purposes
 
@@ -266,9 +324,9 @@ int main(int argc, char** argv){
         );
     }
 
-    cout << "---- Input image paths ("<< images.size() << ") ----" << endl;
-    for (string& path : images){
-        cout << path << endl;
+    cout << "---- Input image paths ----" << endl;
+    for (size_t i=0; i<images.size(); ++i){
+        cout << "#" << i << " = " << images[i] << endl;
     }
     cout<<"\n"<<endl;
 
@@ -304,18 +362,17 @@ int main(int argc, char** argv){
     };
 
 
-
+    //? tmp initializations
     cv::Mat input_img;
     cv::Mat out_img;
-    Bitmap bmp; //? tmp initialization
+    Bitmap bmp;
 
-    auto start = chrono::high_resolution_clock::now();
-    auto end = chrono::high_resolution_clock::now();
     long t_img2bmp = -1;
     long t_bmp2img = -1;
 
 
     if (!use_color) {
+
         switch (pixel_size) {
             case 1:
                 aux_testRoutineGrayscale(
@@ -367,44 +424,55 @@ int main(int argc, char** argv){
     }
 
     else {
+
         switch (pixel_size) {
             case 1:
-                start = chrono::high_resolution_clock::now();
-                bmp = toBitmap(&input_img, pixel_size, th_vector_1b);
-                end = chrono::high_resolution_clock::now();
-                t_img2bmp = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
-
-                start = chrono::high_resolution_clock::now();
-                bmp.toBGRImage_parallel(&out_img, col_palette_test);
-                end = chrono::high_resolution_clock::now();
-                t_bmp2img = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
+                aux_testRoutineColor(
+                    &bmp,
+                    images,
+                    &input_img, 
+                    mode, 
+                    pixel_size, 
+                    min_resizing, 
+                    th_vector_1b, 
+                    &out_img,
+                    col_palette_1b,
+                    &t_img2bmp,
+                    &t_bmp2img
+                );
                 break;
             case 2:
-                start = chrono::high_resolution_clock::now();
-                bmp = toBitmap(&input_img, pixel_size, th_vector_2b);
-                end = chrono::high_resolution_clock::now();
-                t_img2bmp = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
-
-                start = chrono::high_resolution_clock::now();
-                bmp.toBGRImage_parallel(&out_img, col_palette_test);
-                end = chrono::high_resolution_clock::now();
-                t_bmp2img = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
+                aux_testRoutineColor(
+                    &bmp,
+                    images,
+                    &input_img, 
+                    mode, 
+                    pixel_size, 
+                    min_resizing, 
+                    th_vector_2b, 
+                    &out_img,
+                    col_palette_2b,
+                    &t_img2bmp,
+                    &t_bmp2img
+                );
                 break;
             case 4:
-                start = chrono::high_resolution_clock::now();
-                bmp = toBitmap(&input_img, pixel_size, th_vector_4b);
-                end = chrono::high_resolution_clock::now();
-                t_img2bmp = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
-
-                start = chrono::high_resolution_clock::now();
-                bmp.toBGRImage_parallel(&out_img, col_palette_test);
-                end = chrono::high_resolution_clock::now();
-                t_bmp2img = (chrono::duration_cast<chrono::milliseconds>(end-start)).count();
+                aux_testRoutineColor(
+                    &bmp,
+                    images,
+                    &input_img, 
+                    mode, 
+                    pixel_size, 
+                    min_resizing, 
+                    th_vector_4b, 
+                    &out_img,
+                    col_palette_4b,
+                    &t_img2bmp,
+                    &t_bmp2img
+                );
                 break;
         }
-        
-        aux_imshow("Color output bitmap", out_img);
-        out_img.release();
+
     }
 
 

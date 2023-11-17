@@ -29,11 +29,7 @@ p2b::Bitmap p2b::toBitmap(cv::Mat* img_ptr, uint8_t pixel_size, const std::vecto
     uint8_t pixels_per_byte = 8/pixel_size;
 
     size_t bm_rows = img_ptr->rows;
-    size_t bm_cols = img_ptr->cols;
-    while ((bm_cols % pixels_per_byte) != 0){
-        ++bm_cols;
-    }
-    bm_cols /= pixels_per_byte;
+    size_t bm_cols = (img_ptr->cols + pixels_per_byte - 1)/pixels_per_byte;
 
     p2b::Bitmap ret_bm = Bitmap(bm_rows, bm_cols, pixel_size, thresholds_v);
     
@@ -56,11 +52,7 @@ vector<vector<uint8_t>> p2b::toBits(cv::Mat* img_ptr, uint8_t pixel_size, const 
     uint8_t pixels_per_byte = 8/pixel_size;
 
     size_t bm_rows = img_ptr->rows;
-    size_t bm_cols = img_ptr->cols;
-    while ((bm_cols % pixels_per_byte) != 0){
-        ++bm_cols;
-    }
-    bm_cols /= pixels_per_byte;
+    size_t bm_cols = (img_ptr->cols + pixels_per_byte - 1)/pixels_per_byte;
 
     p2b::Bitmap bm = Bitmap(bm_rows, bm_cols, pixel_size, thresholds_v);
     

@@ -86,13 +86,13 @@ void p2b::PRINT_METRICS(cv::Mat img, p2b::Bitmap bitmap, long img2bmp_time_ms, l
         "Pixel size = %d bit(s)\n"
         "Possible values per pixel = %d\n\n"
 
-        "---- Memory metrics ----\n\n"
+        "---- Memory metrics (of the first input image) ----\n\n"
         "Original image size = %ld bytes\n"
         "Grayscale image size = %ld bytes\n"
         "Bitmap size = %ld bytes\n\n"
         "Bitmap to image ratio = %.2f %%\nBitmap to grayscale ratio = %.2f %%\n\n"
         
-        "---- Time metrics ----\n\n"
+        "---- Time metrics (of the first input image) ----\n\n"
         "Image to bitmap = %ld ms\n"
         "Bitmap to image = %ld ms\n",
 
