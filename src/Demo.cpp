@@ -60,7 +60,7 @@ map<string, string> parseArgs(int argc, char** argv){
                     "\t\t(a = add, u = update), default = a\n"
                 "\t-s, --pixelsize : the size of the pixel in the bitmap, one of {1, 2, 4}\n"
                     "\t\tdefault = 2\n"
-                "\t-r, --resizing : boolean flag to use minimal resizing of the bitmap\n"
+                "\t-r, --resizing : boolean flag to turn OFF minimal resizing of the bitmap\n"
                     "\t\tdefault = false\n"
                 "\t-c, --color : boolean flag to specify if output has to be shown in color\n"
                     "\t\tdefault = false\n"
@@ -334,7 +334,7 @@ int main(int argc, char** argv){
 
     char mode = (arg_map["mode"] != "") ? arg_map["mode"][0] : 'a';
     uint8_t pixel_size = (arg_map["pixel_size"]!="") ? (uint8_t) stoi(arg_map["pixel_size"]) : 2;
-    bool min_resizing = (arg_map["resizing"]=="true") ? true : false;
+    bool no_min_resizing = (arg_map["resizing"]=="true") ? true : false;
     bool use_color = (arg_map["color"]=="true") ? true : false;
 
 
@@ -381,7 +381,7 @@ int main(int argc, char** argv){
                     &input_img, 
                     mode,
                     pixel_size, 
-                    min_resizing,
+                    !no_min_resizing,
                     th_vector_1b, 
                     &out_img, 
                     gray_palette_1b, 
@@ -396,7 +396,7 @@ int main(int argc, char** argv){
                     &input_img, 
                     mode,
                     pixel_size, 
-                    min_resizing,
+                    !no_min_resizing,
                     th_vector_2b, 
                     &out_img, 
                     gray_palette_2b, 
@@ -411,7 +411,7 @@ int main(int argc, char** argv){
                     &input_img, 
                     mode,
                     pixel_size, 
-                    min_resizing,
+                    !no_min_resizing,
                     th_vector_4b, 
                     &out_img, 
                     gray_palette_4b, 
@@ -433,7 +433,7 @@ int main(int argc, char** argv){
                     &input_img, 
                     mode, 
                     pixel_size, 
-                    min_resizing, 
+                    !no_min_resizing, 
                     th_vector_1b, 
                     &out_img,
                     col_palette_1b,
@@ -448,7 +448,7 @@ int main(int argc, char** argv){
                     &input_img, 
                     mode, 
                     pixel_size, 
-                    min_resizing, 
+                    !no_min_resizing, 
                     th_vector_2b, 
                     &out_img,
                     col_palette_2b,
@@ -463,7 +463,7 @@ int main(int argc, char** argv){
                     &input_img, 
                     mode, 
                     pixel_size, 
-                    min_resizing, 
+                    !no_min_resizing, 
                     th_vector_4b, 
                     &out_img,
                     col_palette_4b,
@@ -482,7 +482,7 @@ int main(int argc, char** argv){
 
 
 
-    if (mode == 'a'){
+    if (mode == 'a' && images.size() > 1){
         size_t final_bmp_size = (
             bmp.getRows() * bmp.getCols() +
             bmp.getRows() * sizeof(bmp.getVec()[0]) +
