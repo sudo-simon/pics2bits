@@ -35,14 +35,14 @@ sudo make install
 |:--:|
 | _Representation of a bitmap resulting from the add of many images (black represents the absence of information)_ |
 
-| ![size_1](./screenshots/size_1.png) |
+| ![size_1](./screenshots/metrics_1b.png) |
 |:--:|
 | _Metrics of a 5376x3584 image converted to a bitmap with a pixel size of 1 bit_ |
 
-| ![size_2](./screenshots/size_2.png) |
+| ![size_2](./screenshots/metrics_2b.png) |
 |:--:|
 | _Metrics of a 5376x3584 image converted to a bitmap with a pixel size of 2 bits_ |
 
-| ![size_4](./screenshots/size_4.png) |
+| ![size_4](./screenshots/metrics_4b.png) |
 |:--:|
 | _Metrics of a 5376x3584 image converted to a bitmap with a pixel size of 4 bits_ |
