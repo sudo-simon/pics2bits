@@ -13,14 +13,36 @@ cmake build/ &&
 cmake --build ./build --config Release --target all
 ```
 
+An OpenCV install script is also included [here](./OpenCV_installer.sh) if needed:
+
+```sh
+sudo apt update &&
+sudo apt install git cmake make g++-12 &&
+git clone https://github.com/opencv/opencv.git &&
+cd opencv && mkdir -p build && cd build &&
+cmake -DWITH_QT=ON -DWITH_OPENGL=ON .. &&
+make -j4 &&
+sudo make install
+```
+
 ## Screenshots
 
-![lena](./screenshots/lena.png)
+| ![lena](./screenshots/lena.png) |
+|:--:|
+| _Lena bitmap grayscale representation with a pixel size of 2 bits_ |
 
-![add](./screenshots/add.png)
+| ![add](./screenshots/add.png) |
+|:--:|
+| _Representation of a bitmap resulting from the add of many images (black represents the absence of information)_ |
 
-![size_1](./screenshots/size_1.png)
+| ![size_1](./screenshots/size_1.png) |
+|:--:|
+| _Metrics of a 5376x3584 image converted to a bitmap with a pixel size of 1 bit_ |
 
-![size_2](./screenshots/size_2.png)
+| ![size_2](./screenshots/size_2.png) |
+|:--:|
+| _Metrics of a 5376x3584 image converted to a bitmap with a pixel size of 2 bits_ |
 
-![size_4](./screenshots/size_4.png)
+| ![size_4](./screenshots/size_4.png) |
+|:--:|
+| _Metrics of a 5376x3584 image converted to a bitmap with a pixel size of 4 bits_ |
