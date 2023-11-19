@@ -9,8 +9,8 @@ A demo binary is included to show relevant performance metrics and can be compil
 
 ```sh
 mkdir -p build &&
-cmake build/ &&
-cmake --build ./build --config Release --target all
+cmake -DCMAKE_BUILD_TYPE=Release build/ &&
+cmake --build ./build --target all
 ```
 
 An OpenCV install script is also included [here](./OpenCV_installer.sh) if needed:
