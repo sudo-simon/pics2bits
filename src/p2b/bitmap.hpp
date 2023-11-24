@@ -34,7 +34,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <vector>
-#include <opencv2/core/mat.hpp>
+#include <opencv4/opencv2/core/mat.hpp>
 
 
 // ----------------------------------------------------------------------
